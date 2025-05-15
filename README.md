@@ -38,10 +38,15 @@ ProjetoMEBG/
 
 ## 🚀 Como rodar o projeto
 
+<pre>
+
 ### 🔹 1. Clonar o repositório
 
+```
 git clone https://github.com/CBdGM/Projeto-Gest-o-de-Atendimentos.git
 cd Projeto-Gest-o-de-Atendimentos
+```
+</pre>
 
 ### 🔹 2. Backend
 cd backend
