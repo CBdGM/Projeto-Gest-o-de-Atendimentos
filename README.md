@@ -48,11 +48,16 @@ cd Projeto-Gest-o-de-Atendimentos
 ```
 </pre>
 
+<pre>
+
 ### 🔹 2. Backend
+
+```
 cd backend
 python -m venv venv
 source venv/bin/activate  # ou venv\Scripts\activate no Windows
-pip install -r requirements.txt
+pip install -r requirements.txt```
+</pre>
 
 ### ⚙️ Criar o arquivo .env:
 DATABASE_URL=postgresql://usuario:senha@localhost:5432/atendimentos
