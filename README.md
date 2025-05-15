@@ -4,12 +4,18 @@ Sistema completo para gestão de sessões de atendimentos terapêuticos (psicolo
 
 ---
 
-## 📁 Estrutura do Projeto
+<pre>
+
+### 📁 Estrutura do Projeto
+
+```
 ProjetoMEBG/
-├── backend/      # API em Flask + SQLAlchemy + JWT
-├── frontend/     # Interface em React + Vite + MUI
+├── backend/        # API em Flask + SQLAlchemy + JWT
+├── frontend/       # Interface em React + Vite + MUI
 ├── .gitignore
 ├── README.md
+```
+</pre>
 
 ---
 
