@@ -59,11 +59,15 @@ source venv/bin/activate  # ou venv\Scripts\activate no Windows
 pip install -r requirements.txt```
 </pre>
 
+<pre>
+
 ### ⚙️ Criar o arquivo .env:
+```
 DATABASE_URL=postgresql://usuario:senha@localhost:5432/atendimentos
 JWT_SECRET_KEY=sua_chave_secreta
 APP_USERNAME=admin
 APP_PASSWORD=admin123
+</pre>
 
 ### 📦 Aplicar as migrações:
 flask db upgrade
