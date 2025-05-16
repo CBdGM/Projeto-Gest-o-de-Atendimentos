@@ -1,11 +1,13 @@
 from app import db
 from datetime import datetime
+import uuid
 
 class Sessao(db.Model):
     __tablename__ = "sessoes"
 
     id = db.Column(db.Integer, primary_key=True)
-    cliente_id = db.Column(db.Integer, db.ForeignKey("clientes.id", ondelete="CASCADE"), nullable=False)    
+    cliente_id = db.Column(db.Integer, db.ForeignKey("clientes.id", ondelete="CASCADE"), nullable=False)
+    repeticao_id = db.Column(db.String(36), nullable=True)  # Identificador da série de sessões    
     data = db.Column(db.Date, nullable=False)
     tipo_atendimento = db.Column(db.String(30), nullable=False)  # psicologia ou rolfing
     frequencia = db.Column(db.String(20), nullable=False)  # semanal, quinzenal, avulso
@@ -21,6 +23,7 @@ class Sessao(db.Model):
         return {
             "id": self.id,
             "cliente_id": self.cliente_id,
+            "repeticao_id": self.repeticao_id,
             "data": self.data.isoformat(),
             "tipo_atendimento": self.tipo_atendimento,
             "frequencia": self.frequencia,
