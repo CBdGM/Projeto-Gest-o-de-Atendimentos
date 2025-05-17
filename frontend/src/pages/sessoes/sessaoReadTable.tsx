@@ -65,7 +65,8 @@ export default function SessaoReadTable() {
   const fetchSessaos = async () => {
     try {
       const response = await SessaoService.getAll();
-      setSessaos(response.data);
+      const ordenadas = response.data.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+      setSessaos(ordenadas);
     } catch (error: any) {
       console.error("Erro ao buscar sessoes", error?.response || error);
     } finally {
@@ -127,7 +128,7 @@ export default function SessaoReadTable() {
             <br />
             <strong>Cliente:</strong> {clientesMap[sessaoSelecionado?.cliente_id ?? 0] || `ID: ${sessaoSelecionado?.cliente_id}`}
             <br />
-            <strong>Data:</strong> {new Date(sessaoSelecionado?.data || "").toLocaleDateString("pt-BR")}
+            <strong>Data:</strong> {sessaoSelecionado?.data?.split("-").reverse().join("/")}
             <br />
             <strong>Horário:</strong> {sessaoSelecionado?.horario}
             <br />
@@ -165,7 +166,7 @@ export default function SessaoReadTable() {
               {sessoes.map((sessao) => (
                 <TableRow key={sessao.id}>
                   <TableCell>{clientesMap[sessao.cliente_id] || `ID: ${sessao.cliente_id}`}</TableCell>
-                  <TableCell>{new Date(sessao.data).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell>{sessao.data.split("-").reverse().join("/")}</TableCell>
                   <TableCell>{sessao.horario}</TableCell>
                   <TableCell>{sessao.tipo_atendimento}</TableCell>
                   <TableCell>{sessao.frequencia}</TableCell>

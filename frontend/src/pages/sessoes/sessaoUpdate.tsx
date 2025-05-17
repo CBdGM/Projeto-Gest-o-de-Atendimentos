@@ -5,188 +5,304 @@ import {
   TextField,
   Typography,
   Paper,
+  FormControlLabel,
+  Checkbox,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  FormHelperText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material/Select";
 import { useNavigate, useParams } from "react-router-dom";
-import type { Cliente } from "../../services/clienteService";
+import type { Sessao } from "../../services/sessaoService";
+import sessaoService from "../../services/sessaoService";
 import clienteService from "../../services/clienteService";
+// import ClienteSelect from "../../components/ClienteSelect";
 
-export default function ClienteEdit() {
-  const [cliente, setCliente] = useState<Cliente | null>(null);
+function formatCurrency(value: number | string) {
+  const number = typeof value === "string" ? parseFloat(value) : value;
+  if (isNaN(number)) return "";
+  return number.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+  });
+}
+
+export default function SessaoUpdate() {
+  const [sessao, setSessao] = useState<Sessao | null>(null);
+  const [clienteNome, setClienteNome] = useState<string>("");
   const [erro, setErro] = useState("");
   const [erros, setErros] = useState<Record<string, boolean>>({});
+  const [frequenciaOriginal, setFrequenciaOriginal] = useState("");
+  const [dataOriginal, setDataOriginal] = useState("");
+  const [horarioOriginal, setHorarioOriginal] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<null | "frequencia" | "dataHorario">(null);
+  const [pendingSubmit, setPendingSubmit] = useState<{
+    atualizar_futuras_frequencias: boolean;
+    atualizar_futuras_data_horario: boolean;
+  } | null>(null);
   const navigate = useNavigate();
   const { id } = useParams();
 
   useEffect(() => {
     if (id) {
-      clienteService.get(Number(id)).then((res) => setCliente(res.data));
+      sessaoService.get(Number(id)).then((res) => setSessao(res.data));
     }
   }, [id]);
 
-  const formatCpfCnpj = (inputNumber: string) => {
-    if (!inputNumber) return "";
-    const numeric = inputNumber.replace(/\D/g, "");
-    if (numeric.length === 14) {
-      return `${numeric.substring(0, 2)}.${numeric.substring(2, 5)}.${numeric.substring(5, 8)}/${numeric.substring(8, 12)}-${numeric.substring(12, 14)}`;
-    } else if (numeric.length === 11) {
-      return `${numeric.substring(0, 3)}.${numeric.substring(3, 6)}.${numeric.substring(6, 9)}-${numeric.substring(9, 11)}`;
+  useEffect(() => {
+    if (sessao?.cliente_id) {
+      clienteService.get(sessao.cliente_id).then((res) => {
+        setClienteNome(res.data.nome);
+      });
     }
-    return inputNumber;
-  };
+  }, [sessao?.cliente_id]);
 
-  const formatCurrency = (value: string) => {
-    const numeric = parseFloat(value.replace(/[^\d]/g, "")) / 100;
-    if (isNaN(numeric)) return "";
-    return numeric.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
+useEffect(() => {
+  if (sessao && frequenciaOriginal === "" && dataOriginal === "" && horarioOriginal === "") {
+    setFrequenciaOriginal(sessao.frequencia);
+    setDataOriginal(sessao.data);
+    setHorarioOriginal(sessao.horario);
+  }
+}, [sessao]);
 
-  const formatTelefone = (input: string) => {
-    const numeric = input.replace(/\D/g, "").slice(0, 11);
-    if (numeric.length === 0) return "";
-    if (numeric.length < 3) return `(${numeric}`;
-    if (numeric.length < 7) return `(${numeric.slice(0, 2)}) ${numeric.slice(2)}`;
-    if (numeric.length < 11)
-      return `(${numeric.slice(0, 2)}) ${numeric.slice(2, 6)}-${numeric.slice(6)}`;
-    return `(${numeric.slice(0, 2)}) ${numeric.slice(2, 7)}-${numeric.slice(7, 11)}`;
-  };
+  const handleChangeGeneric = (
+    e:
+      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      | SelectChangeEvent<string>
+  ) => {
+    const name = e.target.name;
+    const value = e.target.value;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    if (!name) return;
     setErros((prev) => ({ ...prev, [name]: false }));
-    if (!cliente) return;
+    if (!sessao) return;
 
-    if (name === "cpf_cnpj") {
-      const numericValue = value.replace(/\D/g, "").slice(0, 14);
-      setCliente((prev) => ({ ...prev!, cpf_cnpj: numericValue }));
-      return;
-    }
-
-    setCliente((prev) => ({
+    setSessao((prev) => ({
       ...prev!,
-      [name]: name === "valor_padrao" ? Number(value) : value,
+      [name]: value,
     }));
   };
 
   const validarCampos = () => {
     const novosErros: Record<string, boolean> = {};
-    if (!cliente?.nome.trim()) novosErros.nome = true;
-
-    const cpfCnpj = cliente?.cpf_cnpj.replace(/\D/g, "") || "";
-    if (!cpfCnpj || (cpfCnpj.length !== 11 && cpfCnpj.length !== 14)) {
-      novosErros.cpf_cnpj = true;
-    }
-
-    const telefone = cliente?.telefone.replace(/\D/g, "") || "";
-    if (!telefone || (telefone.length !== 10 && telefone.length !== 11)) {
-      novosErros.telefone = true;
-    }
-
-    if (cliente?.email && !/^\S+@\S+\.\S+$/.test(cliente.email)) {
-      novosErros.email = true;
-    }
-
+    if (!sessao?.data) novosErros.data = true;
+    if (!sessao?.horario) novosErros.horario = true;
+    if (!sessao?.cliente_id) novosErros.cliente_id = true;
+    if (!sessao?.tipo_atendimento) novosErros.tipo_atendimento = true;
+    if (!sessao?.frequencia) novosErros.frequencia = true;
     setErros(novosErros);
     return Object.keys(novosErros).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!cliente || !validarCampos()) return;
+  const finalizarSubmit = async (
+    atualizar_futuras_frequencias: boolean,
+    atualizar_futuras_data_horario: boolean
+  ) => {
     try {
-      await clienteService.update(cliente.id!, cliente);
-      navigate("/clientes");
+      await sessaoService.update(sessao!.id!, {
+        ...(sessao as Sessao),
+        atualizar_futuras_frequencias,
+        atualizar_futuras_data_horario,
+      } as Sessao & {
+        atualizar_futuras_frequencias?: boolean;
+        atualizar_futuras_data_horario?: boolean;
+      });
+      navigate("/sessoes");
     } catch (err) {
       console.error(err);
-      setErro("Erro ao atualizar cliente.");
+      setErro("Erro ao atualizar sessão.");
     }
   };
 
-  if (!cliente) return null;
+  const handleSubmit = async () => {
+    if (!sessao || !validarCampos()) return;
+
+    const frequenciaAlterada = sessao.frequencia !== frequenciaOriginal;
+    const dataAlterada = sessao.data !== dataOriginal;
+    const horarioAlterado = sessao.horario !== horarioOriginal;
+    const dataHorarioAlterado = dataAlterada || horarioAlterado;
+
+
+    // Só exibe o Dialog se houver alteração de frequência ou data/horário
+    if (frequenciaAlterada || dataHorarioAlterado) {
+      if (frequenciaAlterada && !dataHorarioAlterado) {
+        setConfirmDialog("frequencia");
+        setPendingSubmit({
+          atualizar_futuras_frequencias: true,
+          atualizar_futuras_data_horario: false,
+        });
+        return;
+      }
+
+      if (!frequenciaAlterada && dataHorarioAlterado) {
+        setConfirmDialog("dataHorario");
+        setPendingSubmit({
+          atualizar_futuras_frequencias: false,
+          atualizar_futuras_data_horario: true,
+        });
+        return;
+      }
+
+      if (frequenciaAlterada && dataHorarioAlterado) {
+        setConfirmDialog("frequencia");
+        setPendingSubmit({
+          atualizar_futuras_frequencias: true,
+          atualizar_futuras_data_horario: true,
+        });
+        return;
+      }
+    }
+
+    await finalizarSubmit(false, false);
+  };
+
+  if (!sessao) return null;
 
   return (
     <Box display="flex" justifyContent="center" mt={4}>
       <Paper sx={{ p: 4, width: 600 }}>
         <Typography variant="h5" mb={2}>
-          Editar Cliente
+          Editar Sessão
         </Typography>
+
+        <Typography variant="h6" gutterBottom>
+          Cliente: {clienteNome ? clienteNome : `ID: ${sessao.cliente_id}`}
+        </Typography>
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              name="foi_realizada"
+              checked={!!sessao.foi_realizada}
+              onChange={(e) =>
+                setSessao((prev) => ({
+                  ...prev!,
+                  foi_realizada: e.target.checked,
+                }))
+              }
+            />
+          }
+          label="Sessão Realizada"
+        />
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              name="foi_paga"
+              checked={!!sessao.foi_paga}
+              onChange={(e) =>
+                setSessao((prev) => ({
+                  ...prev!,
+                  foi_paga: e.target.checked,
+                }))
+              }
+            />
+          }
+          label="Sessão Paga"
+        />
 
         <TextField
           fullWidth
-          label="Nome"
-          name="nome"
+          label="Data"
+          name="data"
+          type="date"
           margin="normal"
-          value={cliente.nome}
-          onChange={handleChange}
-          error={erros.nome}
-          helperText={erros.nome && "Campo incorreto"}
+          InputLabelProps={{ shrink: true }}
+          value={sessao.data}
+          onChange={handleChangeGeneric}
+          error={erros.data}
         />
+
         <TextField
           fullWidth
-          label="CPF/CNPJ"
-          name="cpf_cnpj"
+          label="Horário"
+          name="horario"
+          type="time"
           margin="normal"
-          value={formatCpfCnpj(cliente.cpf_cnpj)}
-          onChange={handleChange}
-          error={erros.cpf_cnpj}
-          helperText={erros.cpf_cnpj && "CPF ou CNPJ inválido"}
+          InputLabelProps={{ shrink: true }}
+          value={sessao.horario}
+          onChange={handleChangeGeneric}
+          error={erros.horario}
         />
+
+
+
+        <FormControl fullWidth margin="normal" error={erros.tipo_atendimento}>
+          <InputLabel id="tipo-label">Tipo</InputLabel>
+          <Select
+            labelId="tipo-label"
+            name="tipo_atendimento"
+            value={sessao.tipo_atendimento || ""}
+            onChange={handleChangeGeneric}
+            label="Tipo"
+          >
+            <MenuItem value="Selecione"><em>Selecione</em></MenuItem>
+            <MenuItem value="psicologia">Psicologia</MenuItem>
+            <MenuItem value="rolfing">Rolfing</MenuItem>
+          </Select>
+          {erros.tipo_atendimento && (
+            <FormHelperText>Tipo é obrigatório</FormHelperText>
+          )}
+        </FormControl>
+
+        <FormControl fullWidth margin="normal" error={erros.frequencia}>
+          <InputLabel id="frequencia-label">Frequência</InputLabel>
+          <Select
+            labelId="frequencia-label"
+            name="frequencia"
+            value={sessao.frequencia || ""}
+            onChange={handleChangeGeneric}
+            label="Frequência"
+          >
+            <MenuItem value="Selecione"><em>Selecione</em></MenuItem>
+            <MenuItem value="semanal">Semanal</MenuItem>
+            <MenuItem value="quinzenal">Quinzenal</MenuItem>
+            <MenuItem value="mensal">Mensal</MenuItem>
+          </Select>
+          {erros.frequencia && (
+            <FormHelperText>Frequência é obrigatória</FormHelperText>
+          )}
+        </FormControl>
+
         <TextField
           fullWidth
-          label="Telefone"
-          name="telefone"
+          label="Valor (R$)"
+          name="valor"
           margin="normal"
-          value={formatTelefone(cliente.telefone)}
-          onChange={(e) => {
-            const raw = e.target.value.replace(/\D/g, "");
-            setErros((prev) => ({ ...prev, telefone: false }));
-            setCliente((prev) => ({ ...prev!, telefone: raw }));
-          }}
-          error={erros.telefone}
-          helperText={erros.telefone && "Telefone inválido"}
-        />
-        <TextField
-          fullWidth
-          label="Email"
-          name="email"
-          margin="normal"
-          value={cliente.email}
-          onChange={handleChange}
-          error={erros.email}
-          helperText={erros.email && "Email inválido"}
-        />
-        <TextField
-          fullWidth
-          label="Endereço"
-          name="endereco"
-          margin="normal"
-          value={cliente.endereco}
-          onChange={handleChange}
-        />
-        <TextField
-          fullWidth
-          label="Valor Padrão"
-          name="valor_padrao"
-          type="text"
-          margin="normal"
-          value={formatCurrency(cliente.valor_padrao.toString())}
-          onChange={(e) => {
-            const numericValue = e.target.value.replace(/[^\d]/g, "");
-            setCliente((prev) => ({
+          value={sessao.valor?.toString() || ""}
+          onChange={(e) =>
+            setSessao((prev) => ({
               ...prev!,
-              valor_padrao: Number(numericValue),
-            }));
+              valor: parseFloat(e.target.value),
+            }))
+          }
+          InputProps={{
+            startAdornment: formatCurrency(sessao.valor)
+              ? undefined
+              : undefined,
+            inputProps: { inputMode: "decimal" },
           }}
-          onBlur={(e) => {
-            const numeric = parseFloat(e.target.value.replace(/[^\d]/g, "")) / 100;
-            setCliente((prev) => ({
-              ...prev!,
-              valor_padrao: isNaN(numeric) ? 0 : numeric,
-            }));
-          }}
+        />
+
+
+
+        <TextField
+          fullWidth
+          label="Observações"
+          name="observacoes"
+          margin="normal"
+          value={sessao.observacoes || ""}
+          onChange={handleChangeGeneric}
+          multiline
+          rows={4}
         />
 
         {erro && <Typography color="error">{erro}</Typography>}
@@ -195,14 +311,48 @@ export default function ClienteEdit() {
           variant="outlined"
           sx={{ mt: 2 }}
           fullWidth
-          onClick={() => navigate("/clientes")}
+          onClick={() => navigate("/sessoes")}
         >
           Voltar
         </Button>
-        <Button variant="contained" sx={{ mt: 2 }} fullWidth onClick={handleSubmit}>
+        <Button
+          variant="contained"
+          sx={{ mt: 2 }}
+          fullWidth
+          onClick={handleSubmit}
+        >
           Salvar
         </Button>
       </Paper>
+
+      <Dialog open={!!confirmDialog} onClose={() => setConfirmDialog(null)}>
+        <DialogTitle>Confirmar alteração</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {confirmDialog === "frequencia"
+              ? "Deseja aplicar a nova frequência para todas as sessões futuras?"
+              : "Deseja aplicar a alteração de data e/ou horário para todas as sessões futuras?"}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setConfirmDialog(null);
+            finalizarSubmit(false, false);
+          }}>Não</Button>
+          <Button
+            onClick={() => {
+              setConfirmDialog(null);
+              finalizarSubmit(
+                confirmDialog === "frequencia" ? true : pendingSubmit?.atualizar_futuras_frequencias || false,
+                confirmDialog === "dataHorario" ? true : pendingSubmit?.atualizar_futuras_data_horario || false
+              );
+            }}
+            variant="contained"
+          >
+            Sim
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

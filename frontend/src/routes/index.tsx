@@ -8,7 +8,7 @@ import ClienteCreate from "../pages/clientes/ClienteCreate";
 import ClienteUpdate from "../pages/clientes/ClienteUpdate";
 import Sessoes from "../pages/sessoes/index";
 import SessaoCreate from "../pages/sessoes/sessaoCreate";
-// import SessaoUpdate from "../pages/clientes/SessaoUpdate";
+import SessaoUpdate from "../pages/sessoes/sessaoUpdate";
 
 interface AppRoutesProps {
   toggleTheme: () => void;
@@ -34,7 +34,7 @@ export default function AppRoutes({ toggleTheme, mode }: AppRoutesProps) {
 
         <Route path="sessoes" element={<Sessoes />} />
         <Route path="sessoes/novo" element={<SessaoCreate />} />
-        {/* <Route path="clientes/editar/:id" element={<ClienteUpdate />} /> */}
+        <Route path="sessoes/editar/:id" element={<SessaoUpdate />} />        
         {/* ...outras rotas */}
       </Route>
     </Routes>

@@ -46,17 +46,10 @@ export default function Layout({
   const location = useLocation();
 
   useEffect(() => {
-  const drawerModal = document.querySelector(".MuiDrawer-modal");
-  const drawerPaper = document.querySelector(".MuiDrawer-paper");
-
-  const isDrawerVisible =
-    drawerModal?.getAttribute("aria-hidden") !== "true" &&
-    drawerPaper?.getAttribute("style")?.includes("visibility: visible");
-
-  if (!isDrawerVisible) {
-    document.body.style.overflow = "auto";
-  }
-}, [mode]);
+    document.body.style.overflow = "auto"; // restaura scroll
+    const sentinel = document.querySelector('[data-testid="sentinelEnd"]');
+    sentinel?.dispatchEvent(new Event("click")); // tenta fechar drawer invisível, se existir
+  }, [location]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
