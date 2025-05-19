@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogActions
+  DialogActions,
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -44,7 +44,8 @@ import SessaoService from "../../services/sessaoService";
 //   return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
 // }
 
-function formatCurrency(value: number) {
+function formatCurrency(value: number | null | undefined) {
+  if (value == null || isNaN(value)) return "R$ 0,00";
   return value.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -52,20 +53,23 @@ function formatCurrency(value: number) {
   });
 }
 
-
 export default function SessaoReadTable() {
   const [sessoes, setSessaos] = useState<Sessao[]>([]);
   const [clientesMap, setClientesMap] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
-  const [sessaoSelecionado, setSessaoSelecionado] = useState<Sessao | null>(null);
+  const [sessaoSelecionado, setSessaoSelecionado] = useState<Sessao | null>(
+    null
+  );
   const [expandedSessaoId, setExpandedSessaoId] = useState<number | null>(null);
   const navigate = useNavigate();
 
   const fetchSessaos = async () => {
     try {
       const response = await SessaoService.getAll();
-      const ordenadas = response.data.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+      const ordenadas = response.data.sort(
+        (a, b) => new Date(a.data).getTime() - new Date(b.data).getTime()
+      );
       setSessaos(ordenadas);
     } catch (error: any) {
       console.error("Erro ao buscar sessoes", error?.response || error);
@@ -92,10 +96,15 @@ export default function SessaoReadTable() {
     setOpenDialog(true);
   };
 
-  const confirmarExclusao = async () => {
-    if (sessaoSelecionado) {
-      await SessaoService.delete(sessaoSelecionado.id!);
+  const confirmarExclusao = async (futuras: boolean) => {
+    if (!sessaoSelecionado) return;
+
+    try {
+      await SessaoService.delete(sessaoSelecionado.id!, futuras);
       fetchSessaos();
+    } catch (error) {
+      console.error("Erro ao excluir sessão", error);
+    } finally {
       setOpenDialog(false);
       setSessaoSelecionado(null);
     }
@@ -108,14 +117,16 @@ export default function SessaoReadTable() {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
         <Typography variant="h3" gutterBottom>
           Sessões
         </Typography>
-        <Button
-          variant="contained"
-          onClick={() => navigate("/sessoes/novo")}
-        >
+        <Button variant="contained" onClick={() => navigate("/sessoes/novo")}>
           Adicionar Sessão
         </Button>
       </Box>
@@ -124,11 +135,14 @@ export default function SessaoReadTable() {
         <DialogTitle>Confirmar Exclusão</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Deseja realmente excluir esta sessão?
+            Deseja excluir apenas esta sessão ou também todas as sessões futuras com a mesma repetição?
             <br />
-            <strong>Cliente:</strong> {clientesMap[sessaoSelecionado?.cliente_id ?? 0] || `ID: ${sessaoSelecionado?.cliente_id}`}
+            <strong>Cliente:</strong>{" "}
+            {clientesMap[sessaoSelecionado?.cliente_id ?? 0] ||
+              `ID: ${sessaoSelecionado?.cliente_id}`}
             <br />
-            <strong>Data:</strong> {sessaoSelecionado?.data?.split("-").reverse().join("/")}
+            <strong>Data:</strong>{" "}
+            {sessaoSelecionado?.data?.split("-").reverse().join("/")}
             <br />
             <strong>Horário:</strong> {sessaoSelecionado?.horario}
             <br />
@@ -137,8 +151,19 @@ export default function SessaoReadTable() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
-          <Button onClick={confirmarExclusao} color="error" variant="contained">
-            Excluir
+          <Button
+            onClick={() => confirmarExclusao(false)}
+            color="primary"
+            variant="outlined"
+          >
+            Apenas esta
+          </Button>
+          <Button
+            onClick={() => confirmarExclusao(true)}
+            color="error"
+            variant="contained"
+          >
+            Esta e futuras
           </Button>
         </DialogActions>
       </Dialog>
@@ -165,8 +190,13 @@ export default function SessaoReadTable() {
             <TableBody>
               {sessoes.map((sessao) => (
                 <TableRow key={sessao.id}>
-                  <TableCell>{clientesMap[sessao.cliente_id] || `ID: ${sessao.cliente_id}`}</TableCell>
-                  <TableCell>{sessao.data.split("-").reverse().join("/")}</TableCell>
+                  <TableCell>
+                    {clientesMap[sessao.cliente_id] ||
+                      `ID: ${sessao.cliente_id}`}
+                  </TableCell>
+                  <TableCell>
+                    {sessao.data.split("-").reverse().join("/")}
+                  </TableCell>
                   <TableCell>{sessao.horario}</TableCell>
                   <TableCell>{sessao.tipo_atendimento}</TableCell>
                   <TableCell>{sessao.frequencia}</TableCell>
@@ -220,7 +250,6 @@ export default function SessaoReadTable() {
           </Table>
         </TableContainer>
       )}
-
     </Box>
   );
 }

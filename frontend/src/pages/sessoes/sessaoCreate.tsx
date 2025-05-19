@@ -75,7 +75,8 @@ export default function SessaoCreate() {
   const validarCampos = () => {
     const novosErros: Record<string, boolean> = {};
 
-    if (!sessao.cliente_id || sessao.cliente_id <= 0) novosErros.cliente_id = true;
+    if (!sessao.cliente_id || sessao.cliente_id <= 0)
+      novosErros.cliente_id = true;
     if (!sessao.data.trim()) novosErros.data = true;
     if (!sessao.tipo_atendimento.trim()) novosErros.tipo_atendimento = true;
     if (!sessao.frequencia.trim()) novosErros.frequencia = true;
@@ -89,17 +90,30 @@ export default function SessaoCreate() {
   const handleSubmit = async () => {
     if (!validarCampos()) return;
     try {
+      console.log("Enviando sessão:", sessao);
       await sessaoService.create(sessao);
       navigate("/sessoes");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setErro("Erro ao salvar sessão.");
+      if (
+        err?.response?.data?.erro ===
+        "Já existe uma sessão cadastrada para esse horário"
+      ) {
+        setErro("Já existe uma sessão cadastrada para esse horário");
+      } else if (
+        err?.response?.data?.erro ===
+        "Com a frequência selecionada vai haver conflitos de horário no futuro, selecione outra frequência e/ou horário"
+      ) {
+        setErro("Com a frequência selecionada vai haver conflitos de horário no futuro, selecione outra frequência e/ou horário");
+      } else {
+        setErro("Erro ao salvar sessão.");
+      }
     }
   };
 
   return (
     <Box display="flex" justifyContent="center" mt={4}>
-      <Paper sx={{ p: 4, width: 600, maxHeight: '80vh', overflowY: 'auto' }}>
+      <Paper sx={{ p: 4, width: 600, maxHeight: "80vh", overflowY: "auto" }}>
         <Typography variant="h5" mb={2}>
           Nova Sessão
         </Typography>
@@ -111,7 +125,7 @@ export default function SessaoCreate() {
           }
           error={erros.cliente_id}
         />
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
           <TextField
             label="Data"
             name="data"
@@ -136,14 +150,22 @@ export default function SessaoCreate() {
             helperText={erros.horario && "Horário é obrigatório"}
             sx={{ flex: "1 1 45%" }}
           />
-          <FormControl sx={{ flex: "1 1 45%", mt: 2 }} error={erros.tipo_atendimento}>
-            <InputLabel id="tipo-atendimento-label">Tipo de Atendimento</InputLabel>
+          <FormControl
+            sx={{ flex: "1 1 45%", mt: 2 }}
+            error={erros.tipo_atendimento}
+          >
+            <InputLabel id="tipo-atendimento-label">
+              Tipo de Atendimento
+            </InputLabel>
             <Select
               labelId="tipo-atendimento-label"
               name="tipo_atendimento"
               value={sessao.tipo_atendimento}
               onChange={(e) => {
-                const { name, value } = e.target as { name: string; value: string };
+                const { name, value } = e.target as {
+                  name: string;
+                  value: string;
+                };
                 setErros((prev) => ({ ...prev, [name]: false }));
                 setSessao((prev) => ({ ...prev, [name]: value }));
               }}
@@ -161,7 +183,10 @@ export default function SessaoCreate() {
               name="frequencia"
               value={sessao.frequencia}
               onChange={(e) => {
-                const { name, value } = e.target as { name: string; value: string };
+                const { name, value } = e.target as {
+                  name: string;
+                  value: string;
+                };
                 setErros((prev) => ({ ...prev, [name]: false }));
                 setSessao((prev) => ({ ...prev, [name]: value }));
               }}
@@ -210,7 +235,8 @@ export default function SessaoCreate() {
               }));
             }}
             onBlur={(e) => {
-              const numeric = parseFloat(e.target.value.replace(/[^\d]/g, "")) / 100;
+              const numeric =
+                parseFloat(e.target.value.replace(/[^\d]/g, "")) / 100;
               setSessao((prev) => ({
                 ...prev,
                 valor: isNaN(numeric) ? 0 : numeric,
@@ -242,7 +268,12 @@ export default function SessaoCreate() {
         >
           Voltar
         </Button>
-        <Button variant="contained" sx={{ mt: 2 }} fullWidth onClick={handleSubmit}>
+        <Button
+          variant="contained"
+          sx={{ mt: 2 }}
+          fullWidth
+          onClick={handleSubmit}
+        >
           Salvar
         </Button>
       </Paper>

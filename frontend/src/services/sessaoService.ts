@@ -31,9 +31,9 @@ class SessaoService {
     return api.put(`/sessoes/${id}`, data);
   }
 
-  delete(id: number) {
-    return api.delete(`/sessoes/${id}`);
-  }
-}
+  delete(id: number, excluirFuturas: boolean = false) {
+    const url = `/sessoes/${id}${excluirFuturas ? "?delete_all=true" : ""}`;
+    return api.delete(url);
+  }}
 
 export default new SessaoService();

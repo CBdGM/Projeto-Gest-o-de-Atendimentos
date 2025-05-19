@@ -25,16 +25,6 @@ import sessaoService from "../../services/sessaoService";
 import clienteService from "../../services/clienteService";
 // import ClienteSelect from "../../components/ClienteSelect";
 
-function formatCurrency(value: number | string) {
-  const number = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(number)) return "";
-  return number.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2,
-  });
-}
-
 export default function SessaoUpdate() {
   const [sessao, setSessao] = useState<Sessao | null>(null);
   const [clienteNome, setClienteNome] = useState<string>("");
@@ -43,11 +33,16 @@ export default function SessaoUpdate() {
   const [frequenciaOriginal, setFrequenciaOriginal] = useState("");
   const [dataOriginal, setDataOriginal] = useState("");
   const [horarioOriginal, setHorarioOriginal] = useState("");
-  const [confirmDialog, setConfirmDialog] = useState<null | "frequencia" | "dataHorario">(null);
-  const [pendingSubmit, setPendingSubmit] = useState<{
-    atualizar_futuras_frequencias: boolean;
-    atualizar_futuras_data_horario: boolean;
-  } | null>(null);
+  const [valorOriginal, setValorOriginal] = useState<number>(0);
+  const [confirmDialog, setConfirmDialog] = useState<
+    null | "frequencia" | "dataHorario" | "valor"
+  >(null);
+  const [confirmQueue, setConfirmQueue] = useState<string[]>([]);
+  const [submitOptions, setSubmitOptions] = useState({
+    atualizar_futuras_frequencias: false,
+    atualizar_futuras_data_horario: false,
+    atualizar_valores_futuros: false,
+  });
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -65,13 +60,19 @@ export default function SessaoUpdate() {
     }
   }, [sessao?.cliente_id]);
 
-useEffect(() => {
-  if (sessao && frequenciaOriginal === "" && dataOriginal === "" && horarioOriginal === "") {
-    setFrequenciaOriginal(sessao.frequencia);
-    setDataOriginal(sessao.data);
-    setHorarioOriginal(sessao.horario);
-  }
-}, [sessao]);
+  useEffect(() => {
+    if (
+      sessao &&
+      frequenciaOriginal === "" &&
+      dataOriginal === "" &&
+      horarioOriginal === ""
+    ) {
+      setFrequenciaOriginal(sessao.frequencia);
+      setDataOriginal(sessao.data);
+      setHorarioOriginal(sessao.horario);
+      setValorOriginal(sessao.valor);
+    }
+  }, [sessao]);
 
   const handleChangeGeneric = (
     e:
@@ -91,6 +92,16 @@ useEffect(() => {
     }));
   };
 
+  function formatCurrency(value: number | string) {
+    const number = typeof value === "string" ? parseFloat(value) : value;
+    if (isNaN(number)) return "";
+    return number.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+    });
+  }
+
   const validarCampos = () => {
     const novosErros: Record<string, boolean> = {};
     if (!sessao?.data) novosErros.data = true;
@@ -104,64 +115,99 @@ useEffect(() => {
 
   const finalizarSubmit = async (
     atualizar_futuras_frequencias: boolean,
-    atualizar_futuras_data_horario: boolean
+    atualizar_futuras_data_horario: boolean,
+    atualizar_valores_futuros: boolean = false
   ) => {
     try {
       await sessaoService.update(sessao!.id!, {
         ...(sessao as Sessao),
         atualizar_futuras_frequencias,
         atualizar_futuras_data_horario,
+        atualizar_valores_futuros,
       } as Sessao & {
         atualizar_futuras_frequencias?: boolean;
         atualizar_futuras_data_horario?: boolean;
+        atualizar_valores_futuros?: boolean;
       });
       navigate("/sessoes");
-    } catch (err) {
-      console.error(err);
-      setErro("Erro ao atualizar sessão.");
+    } catch (err: any) {
+      if (
+        err?.response?.data?.erro ===
+        "Já existe uma sessão cadastrada para esse horário"
+      ) {
+        setErro("Já existe uma sessão cadastrada para esse horário.");
+      } else if (
+        err?.response?.data?.erro?.includes("Com a frequência selecionada")
+      ) {
+        setErro(
+          "Com a frequência selecionada vai haver conflitos de horário no futuro, selecione outra frequência e/ou horário."
+        );
+      } else if (err?.response?.data?.erro?.includes("Com o novo horário")) {
+        setErro(
+          "Com o novo horário haverá conflitos de sessões futuras. Altere o horário ou desmarque a atualização em cadeia."
+        );
+      } else if (err?.response?.data?.erro?.includes("Com a nova data")) {
+        setErro(
+          "Com a nova data haverá conflitos de sessões futuras. Altere a data ou desmarque a atualização em cadeia."
+        );
+      } else {
+        setErro("Erro ao atualizar sessão.");
+      }
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!sessao || !validarCampos()) return;
 
     const frequenciaAlterada = sessao.frequencia !== frequenciaOriginal;
     const dataAlterada = sessao.data !== dataOriginal;
     const horarioAlterado = sessao.horario !== horarioOriginal;
+    const valorAlterado = sessao.valor !== valorOriginal;
     const dataHorarioAlterado = dataAlterada || horarioAlterado;
 
+    const queue: string[] = [];
+    if (frequenciaAlterada) queue.push("frequencia");
+    if (dataHorarioAlterado) queue.push("dataHorario");
+    if (valorAlterado) queue.push("valor");
 
-    // Só exibe o Dialog se houver alteração de frequência ou data/horário
-    if (frequenciaAlterada || dataHorarioAlterado) {
-      if (frequenciaAlterada && !dataHorarioAlterado) {
-        setConfirmDialog("frequencia");
-        setPendingSubmit({
-          atualizar_futuras_frequencias: true,
-          atualizar_futuras_data_horario: false,
-        });
-        return;
-      }
-
-      if (!frequenciaAlterada && dataHorarioAlterado) {
-        setConfirmDialog("dataHorario");
-        setPendingSubmit({
-          atualizar_futuras_frequencias: false,
-          atualizar_futuras_data_horario: true,
-        });
-        return;
-      }
-
-      if (frequenciaAlterada && dataHorarioAlterado) {
-        setConfirmDialog("frequencia");
-        setPendingSubmit({
-          atualizar_futuras_frequencias: true,
-          atualizar_futuras_data_horario: true,
-        });
-        return;
-      }
+    if (queue.length > 0) {
+      setConfirmQueue(queue);
+      setConfirmDialog(queue[0] as "frequencia" | "dataHorario" | "valor");
+      return;
     }
 
-    await finalizarSubmit(false, false);
+    finalizarSubmit(false, false, false);
+  };
+
+  const handleConfirmResponse = (aplicar: boolean) => {
+    if (!confirmDialog) return;
+
+    setSubmitOptions((prev) => ({
+      ...prev,
+      ...(confirmDialog === "frequencia" && { atualizar_futuras_frequencias: aplicar }),
+      ...(confirmDialog === "dataHorario" && { atualizar_futuras_data_horario: aplicar }),
+      ...(confirmDialog === "valor" && { atualizar_valores_futuros: aplicar }),
+    }));
+
+    const nextQueue = [...confirmQueue];
+    nextQueue.shift();
+
+    if (nextQueue.length > 0) {
+      setConfirmQueue(nextQueue);
+      setConfirmDialog(nextQueue[0] as "frequencia" | "dataHorario" | "valor");
+    } else {
+      setConfirmDialog(null);
+      finalizarSubmit(
+        submitOptions.atualizar_futuras_frequencias || (aplicar && confirmDialog === "frequencia"),
+        submitOptions.atualizar_futuras_data_horario || (aplicar && confirmDialog === "dataHorario"),
+        submitOptions.atualizar_valores_futuros || (aplicar && confirmDialog === "valor")
+      );
+      setSubmitOptions({
+        atualizar_futuras_frequencias: false,
+        atualizar_futuras_data_horario: false,
+        atualizar_valores_futuros: false,
+      });
+    }
   };
 
   if (!sessao) return null;
@@ -233,8 +279,6 @@ useEffect(() => {
           error={erros.horario}
         />
 
-
-
         <FormControl fullWidth margin="normal" error={erros.tipo_atendimento}>
           <InputLabel id="tipo-label">Tipo</InputLabel>
           <Select
@@ -244,7 +288,9 @@ useEffect(() => {
             onChange={handleChangeGeneric}
             label="Tipo"
           >
-            <MenuItem value="Selecione"><em>Selecione</em></MenuItem>
+            <MenuItem value="Selecione">
+              <em>Selecione</em>
+            </MenuItem>
             <MenuItem value="psicologia">Psicologia</MenuItem>
             <MenuItem value="rolfing">Rolfing</MenuItem>
           </Select>
@@ -262,7 +308,9 @@ useEffect(() => {
             onChange={handleChangeGeneric}
             label="Frequência"
           >
-            <MenuItem value="Selecione"><em>Selecione</em></MenuItem>
+            <MenuItem value="Selecione">
+              <em>Selecione</em>
+            </MenuItem>
             <MenuItem value="semanal">Semanal</MenuItem>
             <MenuItem value="quinzenal">Quinzenal</MenuItem>
             <MenuItem value="mensal">Mensal</MenuItem>
@@ -274,25 +322,28 @@ useEffect(() => {
 
         <TextField
           fullWidth
-          label="Valor (R$)"
+          label="Valor"
           name="valor"
           margin="normal"
-          value={sessao.valor?.toString() || ""}
-          onChange={(e) =>
+          value={formatCurrency(sessao.valor)}
+          onChange={(e) => {
+            const numericValue = e.target.value.replace(/[^\d]/g, "");
             setSessao((prev) => ({
               ...prev!,
-              valor: parseFloat(e.target.value),
-            }))
-          }
-          InputProps={{
-            startAdornment: formatCurrency(sessao.valor)
-              ? undefined
-              : undefined,
-            inputProps: { inputMode: "decimal" },
+              valor: Number(numericValue) / 100,
+            }));
           }}
+          onBlur={(e) => {
+            const numeric =
+              parseFloat(e.target.value.replace(/[^\d]/g, "")) / 100;
+            setSessao((prev) => ({
+              ...prev!,
+              valor: isNaN(numeric) ? 0 : numeric,
+            }));
+          }}
+          error={erros.valor}
+          helperText={erros.valor && "Valor inválido"}
         />
-
-
 
         <TextField
           fullWidth
@@ -331,24 +382,14 @@ useEffect(() => {
           <DialogContentText>
             {confirmDialog === "frequencia"
               ? "Deseja aplicar a nova frequência para todas as sessões futuras?"
-              : "Deseja aplicar a alteração de data e/ou horário para todas as sessões futuras?"}
+              : confirmDialog === "dataHorario"
+              ? "Deseja aplicar a alteração de data e/ou horário para todas as sessões futuras?"
+              : "Deseja aplicar o novo valor para todas as sessões futuras?"}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => {
-            setConfirmDialog(null);
-            finalizarSubmit(false, false);
-          }}>Não</Button>
-          <Button
-            onClick={() => {
-              setConfirmDialog(null);
-              finalizarSubmit(
-                confirmDialog === "frequencia" ? true : pendingSubmit?.atualizar_futuras_frequencias || false,
-                confirmDialog === "dataHorario" ? true : pendingSubmit?.atualizar_futuras_data_horario || false
-              );
-            }}
-            variant="contained"
-          >
+          <Button onClick={() => handleConfirmResponse(false)}>Não</Button>
+          <Button onClick={() => handleConfirmResponse(true)} variant="contained">
             Sim
           </Button>
         </DialogActions>

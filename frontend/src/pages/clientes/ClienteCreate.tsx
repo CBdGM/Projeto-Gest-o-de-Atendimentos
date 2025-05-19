@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Paper,
-} from "@mui/material";
+import { Box, Button, TextField, Typography, Paper } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import type { Cliente } from "../../services/clienteService";
 import clienteService from "../../services/clienteService";
@@ -29,9 +23,18 @@ export default function ClienteCreate() {
     if (!inputNumber) return "";
     const numeric = inputNumber.replace(/\D/g, "");
     if (numeric.length === 14) {
-      return `${numeric.substring(0, 2)}.${numeric.substring(2, 5)}.${numeric.substring(5, 8)}/${numeric.substring(8, 12)}-${numeric.substring(12, 14)}`;
+      return `${numeric.substring(0, 2)}.${numeric.substring(
+        2,
+        5
+      )}.${numeric.substring(5, 8)}/${numeric.substring(
+        8,
+        12
+      )}-${numeric.substring(12, 14)}`;
     } else if (numeric.length === 11) {
-      return `${numeric.substring(0, 3)}.${numeric.substring(3, 6)}.${numeric.substring(6, 9)}-${numeric.substring(9, 11)}`;
+      return `${numeric.substring(0, 3)}.${numeric.substring(
+        3,
+        6
+      )}.${numeric.substring(6, 9)}-${numeric.substring(9, 11)}`;
     }
     return inputNumber;
   };
@@ -51,10 +54,16 @@ export default function ClienteCreate() {
     const numeric = input.replace(/\D/g, "").slice(0, 11);
     if (numeric.length === 0) return "";
     if (numeric.length < 3) return `(${numeric}`;
-    if (numeric.length < 7) return `(${numeric.slice(0, 2)}) ${numeric.slice(2)}`;
+    if (numeric.length < 7)
+      return `(${numeric.slice(0, 2)}) ${numeric.slice(2)}`;
     if (numeric.length < 11)
-      return `(${numeric.slice(0, 2)}) ${numeric.slice(2, 6)}-${numeric.slice(6)}`;
-    return `(${numeric.slice(0, 2)}) ${numeric.slice(2, 7)}-${numeric.slice(7, 11)}`;
+      return `(${numeric.slice(0, 2)}) ${numeric.slice(2, 6)}-${numeric.slice(
+        6
+      )}`;
+    return `(${numeric.slice(0, 2)}) ${numeric.slice(2, 7)}-${numeric.slice(
+      7,
+      11
+    )}`;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,9 +112,13 @@ export default function ClienteCreate() {
     try {
       await clienteService.create(cliente);
       navigate("/clientes");
-    } catch (err) {
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        setErro("Já existe um cliente com este CPF/CNPJ.");
+      } else {
+        setErro("Erro ao salvar cliente.");
+      }
       console.error(err);
-      setErro("Erro ao salvar cliente.");
     }
   };
 
@@ -186,7 +199,8 @@ export default function ClienteCreate() {
             }));
           }}
           onBlur={(e) => {
-            const numeric = parseFloat(e.target.value.replace(/[^\d]/g, "")) / 100;
+            const numeric =
+              parseFloat(e.target.value.replace(/[^\d]/g, "")) / 100;
             setCliente((prev) => ({
               ...prev,
               valor_padrao: isNaN(numeric) ? 0 : numeric,
@@ -204,7 +218,12 @@ export default function ClienteCreate() {
         >
           Voltar
         </Button>
-        <Button variant="contained" sx={{ mt: 2 }} fullWidth onClick={handleSubmit}>
+        <Button
+          variant="contained"
+          sx={{ mt: 2 }}
+          fullWidth
+          onClick={handleSubmit}
+        >
           Salvar
         </Button>
       </Paper>
