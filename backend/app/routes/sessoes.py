@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from app import db
 from app.models.sessao import Sessao
 from flask_jwt_extended import jwt_required
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import uuid
 import unicodedata
 from sqlalchemy import and_
@@ -153,7 +153,6 @@ def create_sessao():
 def update_sessao(id):
     sessao = Sessao.query.get_or_404(id)
     data = request.get_json()
-    print("[DEBUG] Dados recebidos para atualização:", data)
     atualizar_futuras_frequencias = data.get("atualizar_futuras_frequencias", False)
     atualizar_futuras_data_horario = data.get("atualizar_futuras_data_horario", False)
     atualizar_valores_futuros = data.get("atualizar_valores_futuros", False)
@@ -163,7 +162,6 @@ def update_sessao(id):
     # NOVO BLOCO: verificar conflito do novo horário
     nova_data = data.get("data", sessao.data)
     novo_horario = data.get("horario", sessao.horario)
-    print("[DEBUG] Verificando conflito com nova data/horário:", nova_data, novo_horario)
     nova_datahora = datetime.fromisoformat(f"{nova_data}T{novo_horario}")
     uma_hora_antes = nova_datahora - timedelta(hours=1)
     uma_hora_depois = nova_datahora + timedelta(hours=1)
@@ -175,13 +173,11 @@ def update_sessao(id):
         Sessao.horario <= uma_hora_depois.time().isoformat()
     ).first()
 
-    print("[DEBUG] Conflito detectado com ID:", conflito.id if conflito else "Nenhum")
 
     if conflito:
         return jsonify({"erro": "Já existe uma sessão cadastrada para esse horário"}), 400
 
     # Atualiza os campos da sessão principal
-    print("[DEBUG] Atualizando sessão ID:", sessao.id)
     campos = [
         "data", "tipo_atendimento", "frequencia", "horario",
         "foi_realizada", "foi_paga", "valor", "observacoes"
@@ -200,7 +196,6 @@ def update_sessao(id):
 
         # Se frequência vai mudar
         if atualizar_futuras_frequencias and "frequencia" in data:
-            print("[DEBUG] Atualizando frequência das futuras sessões")
             dias_frequencia = FREQ_MAP.get(normalizar_dia_semana(data["frequencia"]), 0)
             if dias_frequencia > 0:
                 sessoes_futuras.sort(key=lambda s: s.data)
@@ -214,7 +209,6 @@ def update_sessao(id):
                         nova_data_base -= timedelta(days=1)
                     nova_data = nova_data_base.date().isoformat()
 
-                    print(f"[DEBUG] Verificando conflito em {nova_data} às {sessao.horario} para futura ID {futura.id}")
                     # NOVO: checar conflitos antes de aplicar
                     nova_datahora = datetime.fromisoformat(f"{nova_data}T{sessao.horario}")
                     uma_hora_antes = nova_datahora - timedelta(hours=1)
@@ -237,10 +231,8 @@ def update_sessao(id):
 
         # Se horário e/ou data vão mudar
         if atualizar_futuras_data_horario:
-            print("[DEBUG] Atualizando data/horário das futuras sessões")
             if "horario" in data:
                 for futura in sessoes_futuras:
-                    print(f"[DEBUG] Verificando conflito em {futura.data} às {data['horario']} para futura ID {futura.id}")
                     nova_datahora = datetime.fromisoformat(f"{futura.data}T{data['horario']}")
                     uma_hora_antes = nova_datahora - timedelta(hours=1)
                     uma_hora_depois = nova_datahora + timedelta(hours=1)
@@ -261,20 +253,21 @@ def update_sessao(id):
 
             if "data" in data:
                 from dateutil.parser import parse
+                dias_frequencia = FREQ_MAP.get(normalizar_dia_semana(sessao.frequencia), 0)
                 data_base = datetime.fromisoformat(sessao.data)
                 dia_semana_alvo = data_base.weekday()
 
                 for i, futura in enumerate(sessoes_futuras):
                     try:
-                        print(f"[DEBUG] futura.data antes do parse: {futura.data} ({type(futura.data)})")
                         if isinstance(futura.data, datetime):
                             futura_data_date = futura.data.date()
                         elif isinstance(futura.data, str):
                             futura_data_date = parse(futura.data).date()
+                        elif isinstance(futura.data, date):
+                            futura_data_date = futura.data
                         else:
                             raise ValueError(f"Tipo inesperado para futura.data: {type(futura.data)}")
                     except Exception as e:
-                        print(f"[ERROR] Falha ao converter futura.data: {futura.data} ({type(futura.data)}): {e}")
                         raise
 
                     nova_data_base = data_base + timedelta(days=dias_frequencia * (i + 1))
@@ -284,7 +277,6 @@ def update_sessao(id):
 
                     nova_data_str = nova_data.date().isoformat()
 
-                    print(f"[DEBUG] Verificando conflito em {nova_data_str} às {futura.horario} para futura ID {futura.id}")
                     nova_datahora = datetime.fromisoformat(f"{nova_data_str}T{futura.horario}")
                     uma_hora_antes = nova_datahora - timedelta(hours=1)
                     uma_hora_depois = nova_datahora + timedelta(hours=1)
@@ -305,7 +297,6 @@ def update_sessao(id):
                     futura.data = nova_data.date().isoformat()
 
     if atualizar_valores_futuros and sessao.repeticao_id and "valor" in data:
-        print("[DEBUG] Atualizando valores das futuras sessões")
         for futura in sessoes_futuras:
             futura.valor = data["valor"]
 

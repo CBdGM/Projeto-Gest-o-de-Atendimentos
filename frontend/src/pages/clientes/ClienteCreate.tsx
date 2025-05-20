@@ -8,9 +8,9 @@ const clienteInicial: Cliente = {
   nome: "",
   cpf_cnpj: "",
   telefone: "",
+  telefone_emergencia: "",
   email: "",
   endereco: "",
-  valor_padrao: 0,
 };
 
 export default function ClienteCreate() {
@@ -37,17 +37,6 @@ export default function ClienteCreate() {
       )}.${numeric.substring(6, 9)}-${numeric.substring(9, 11)}`;
     }
     return inputNumber;
-  };
-
-  const formatCurrency = (value: string) => {
-    const numeric = parseFloat(value.replace(/[^\d]/g, "")) / 100;
-    if (isNaN(numeric)) return "";
-    return numeric.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
   };
 
   const formatTelefone = (input: string) => {
@@ -81,7 +70,7 @@ export default function ClienteCreate() {
 
     setCliente((prev) => ({
       ...prev,
-      [name]: name === "valor_padrao" ? Number(value) : value,
+      [name]: value,
     }));
   };
 
@@ -168,6 +157,20 @@ export default function ClienteCreate() {
         />
         <TextField
           fullWidth
+          label="Telefone de Emergência"
+          name="telefone_emergencia"
+          margin="normal"
+          value={formatTelefone(cliente.telefone_emergencia || "")}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/\D/g, "");
+            setCliente((prev) => ({
+              ...prev,
+              telefone_emergencia: raw,
+            }));
+          }}
+        />
+        <TextField
+          fullWidth
           label="Email"
           name="email"
           margin="normal"
@@ -183,29 +186,6 @@ export default function ClienteCreate() {
           margin="normal"
           value={cliente.endereco}
           onChange={handleChange}
-        />
-        <TextField
-          fullWidth
-          label="Valor Padrão"
-          name="valor_padrao"
-          type="text"
-          margin="normal"
-          value={formatCurrency(cliente.valor_padrao.toString())}
-          onChange={(e) => {
-            const numericValue = e.target.value.replace(/[^\d]/g, "");
-            setCliente((prev) => ({
-              ...prev,
-              valor_padrao: Number(numericValue),
-            }));
-          }}
-          onBlur={(e) => {
-            const numeric =
-              parseFloat(e.target.value.replace(/[^\d]/g, "")) / 100;
-            setCliente((prev) => ({
-              ...prev,
-              valor_padrao: isNaN(numeric) ? 0 : numeric,
-            }));
-          }}
         />
 
         {erro && <Typography color="error">{erro}</Typography>}

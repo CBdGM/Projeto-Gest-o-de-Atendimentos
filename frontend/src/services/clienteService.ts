@@ -7,7 +7,7 @@ export interface Cliente {
   telefone: string;
   email: string;
   endereco: string;
-  valor_padrao: number;
+  telefone_emergencia: string;
 }
 
 class ClienteService {
@@ -20,7 +20,7 @@ class ClienteService {
   }
 
   create(data: Cliente) {
-    return api.post<Cliente>("/clientes", data);
+    return api.post<Cliente>("/clientes/", data);
   }
 
   update(id: number, data: Cliente) {

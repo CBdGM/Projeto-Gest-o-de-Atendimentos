@@ -16,6 +16,9 @@ export default function Login() {
         {
           username,
           password,
+        },
+        {
+          withCredentials: true
         }
       );
 
@@ -23,6 +26,7 @@ export default function Login() {
       localStorage.setItem("refresh_token", res.data.refresh_token);
       navigate("/"); // redireciona para dashboard ou clientes
     } catch (err) {
+        console.log(err)
       setErro("Usuário ou senha inválidos.");
     }
   };

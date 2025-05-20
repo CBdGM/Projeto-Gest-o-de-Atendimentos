@@ -43,14 +43,6 @@ function formatTelefone(value: string) {
   return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
 }
 
-function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2,
-  });
-}
-
 
 export default function ClienteReadTable() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -92,12 +84,22 @@ export default function ClienteReadTable() {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h3">Clientes</Typography>
-        <Button
-          variant="contained"
-          onClick={() => navigate("/clientes/novo")}
-        >
-          Adicionar Cliente
-        </Button>
+        <Box display="flex" alignItems="center">
+          <Button
+            variant="contained"
+            onClick={() => navigate("/clientes/novo")}
+          >
+            Adicionar Cliente
+          </Button>
+          <Button
+            variant="outlined"
+            sx={{ ml: 2 }}
+            onClick={() => navigate(`/recibos/gerar/${clienteSelecionado?.id}`)}
+            disabled={!clienteSelecionado}
+          >
+            Gerar Recibo
+          </Button>
+        </Box>
       </Box>
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
@@ -123,28 +125,32 @@ export default function ClienteReadTable() {
         <CircularProgress />
       ) : (
         <TableContainer component={Paper}>
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Nome</TableCell>
-                <TableCell>CPF/CNPJ</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Telefone</TableCell>
-                <TableCell>Endereço</TableCell>
-                <TableCell>Valor Padrão</TableCell>
-                <TableCell>Ações</TableCell>
+                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Nome</TableCell>
+                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>CPF/CNPJ</TableCell>
+                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Email</TableCell>
+                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Telefone</TableCell>
+                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Telefone de Emergência</TableCell>
+                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Endereço</TableCell>
+                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Ações</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {clientes.map((cliente) => (
                 <TableRow key={cliente.id}>
-                  <TableCell>{cliente.nome}</TableCell>
-                  <TableCell>{formatCpfCnpj(cliente.cpf_cnpj)}</TableCell>
-                  <TableCell>{cliente.email}</TableCell>
-                  <TableCell>{formatTelefone(cliente.telefone)}</TableCell>
-                  <TableCell>{cliente.endereco}</TableCell>
-                  <TableCell>{formatCurrency(cliente.valor_padrao)}</TableCell>
-                  <TableCell>
+                  <TableCell sx={{ fontSize: '1rem' }}>{cliente.nome}</TableCell>
+                  <TableCell sx={{ fontSize: '1rem' }}>{formatCpfCnpj(cliente.cpf_cnpj)}</TableCell>
+                  <TableCell sx={{ fontSize: '1rem' }}>
+                    <a href={`mailto:${cliente.email}`} style={{ textDecoration: "none", color: "inherit" }}>
+                      {cliente.email}
+                    </a>
+                  </TableCell>
+                  <TableCell sx={{ fontSize: '1rem' }}>{formatTelefone(cliente.telefone)}</TableCell>
+                  <TableCell sx={{ fontSize: '1rem' }}>{formatTelefone(cliente.telefone_emergencia || "")}</TableCell>
+                  <TableCell sx={{ fontSize: '1rem' }}>{cliente.endereco}</TableCell>
+                  <TableCell sx={{ fontSize: '1rem' }}>
                     <IconButton
                       color="primary"
                       onClick={() => navigate(`/clientes/editar/${cliente.id}`)}
@@ -156,6 +162,12 @@ export default function ClienteReadTable() {
                       onClick={() => handleDelete(cliente)}
                     >
                       <Delete />
+                    </IconButton>
+                    <IconButton
+                      color="secondary"
+                      onClick={() => navigate(`/recibos/gerar/${cliente.id}`)}
+                    >
+                      🧾
                     </IconButton>
                   </TableCell>
                 </TableRow>

@@ -35,12 +35,14 @@ def get_cliente_by_nome(nome):
 @jwt_required()
 def create_cliente():
     data = request.get_json()
+    print("[DEBUG] Dados recebidos para criação de cliente:", data)
     cpf_cnpj = data.get("cpf_cnpj", "").strip()
 
     # Se o cpf_cnpj não for vazio e não for apenas zeros, checar duplicado
     if cpf_cnpj and not all(c == "0" for c in cpf_cnpj):
         existente = Cliente.query.filter_by(cpf_cnpj=cpf_cnpj).first()
         if existente:
+            print("[DEBUG] Cliente com CPF/CNPJ duplicado encontrado:", existente.to_dict())
             return jsonify({"erro": "Já existe um cliente com este CPF/CNPJ."}), 409
 
     cliente = Cliente(
@@ -49,11 +51,13 @@ def create_cliente():
         endereco=data.get("endereco"),
         telefone=data.get("telefone"),
         email=data.get("email"),
-        valor_padrao=data.get("valor_padrao"),
+        telefone_emergencia=data.get("telefone_emergencia"),
         ativo=True,
     )
     db.session.add(cliente)
     db.session.commit()
+    print("[DEBUG] Criando novo cliente com os dados:", cliente.to_dict())
+    print("[DEBUG] Cliente criado com sucesso. ID:", cliente.id)
     return jsonify(cliente.to_dict()), 201
 
 # PUT /clientes/<id> → atualizar
@@ -76,7 +80,7 @@ def update_cliente(id):
     cliente.endereco = data.get("endereco", cliente.endereco)
     cliente.telefone = data.get("telefone", cliente.telefone)
     cliente.email = data.get("email", cliente.email)
-    cliente.valor_padrao = data.get("valor_padrao", cliente.valor_padrao)
+    cliente.telefone_emergencia = data.get("telefone_emergencia", cliente.telefone_emergencia)
     cliente.ativo = data.get("ativo", cliente.ativo)
 
     db.session.commit()

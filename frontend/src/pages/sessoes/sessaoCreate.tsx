@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import ClienteSelect from "../../components/ClienteSelect";
 import {
   Box,
@@ -30,10 +31,17 @@ const sessaoInicial: Sessao = {
 };
 
 export default function SessaoCreate() {
-  const [sessao, setSessao] = useState<Sessao>(sessaoInicial);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const paramData = searchParams.get("data") || "";
+  const paramHorario = searchParams.get("horario") || "";
+  const [sessao, setSessao] = useState<Sessao>({
+    ...sessaoInicial,
+    data: paramData,
+    horario: paramHorario,
+  });
   const [erro, setErro] = useState("");
   const [erros, setErros] = useState<Record<string, boolean>>({});
-  const navigate = useNavigate();
 
   const formatCurrency = (value: string) => {
     const numeric = parseFloat(value.replace(/[^\d]/g, "")) / 100;
@@ -90,7 +98,6 @@ export default function SessaoCreate() {
   const handleSubmit = async () => {
     if (!validarCampos()) return;
     try {
-      console.log("Enviando sessão:", sessao);
       await sessaoService.create(sessao);
       navigate("/sessoes");
     } catch (err: any) {

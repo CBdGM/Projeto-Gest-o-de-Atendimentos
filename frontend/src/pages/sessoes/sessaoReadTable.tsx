@@ -19,6 +19,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -62,6 +64,7 @@ export default function SessaoReadTable() {
     null
   );
   const [expandedSessaoId, setExpandedSessaoId] = useState<number | null>(null);
+  const [exibirSessoesAntigas, setExibirSessoesAntigas] = useState(true);
   const navigate = useNavigate();
 
   const fetchSessaos = async () => {
@@ -126,9 +129,22 @@ export default function SessaoReadTable() {
         <Typography variant="h3" gutterBottom>
           Sessões
         </Typography>
-        <Button variant="contained" onClick={() => navigate("/sessoes/novo")}>
-          Adicionar Sessão
-        </Button>
+        <Box display="flex" alignItems="center">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={exibirSessoesAntigas}
+                onChange={(e) => setExibirSessoesAntigas(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Exibir sessões antigas/realizadas"
+            sx={{ mr: 2 }}
+          />
+          <Button variant="contained" onClick={() => navigate("/sessoes/novo")}>
+            Adicionar Sessão
+          </Button>
+        </Box>
       </Box>
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
@@ -188,7 +204,13 @@ export default function SessaoReadTable() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sessoes.map((sessao) => (
+              {sessoes
+                .filter((sessao) => {
+                  if (exibirSessoesAntigas) return true;
+                  const hoje = new Date().toISOString().split("T")[0];
+                  return !(sessao.data < hoje && sessao.foi_realizada);
+                })
+                .map((sessao) => (
                 <TableRow key={sessao.id}>
                   <TableCell>
                     {clientesMap[sessao.cliente_id] ||
