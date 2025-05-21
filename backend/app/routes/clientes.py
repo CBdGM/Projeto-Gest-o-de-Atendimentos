@@ -35,14 +35,12 @@ def get_cliente_by_nome(nome):
 @jwt_required()
 def create_cliente():
     data = request.get_json()
-    print("[DEBUG] Dados recebidos para criação de cliente:", data)
     cpf_cnpj = data.get("cpf_cnpj", "").strip()
 
     # Se o cpf_cnpj não for vazio e não for apenas zeros, checar duplicado
     if cpf_cnpj and not all(c == "0" for c in cpf_cnpj):
         existente = Cliente.query.filter_by(cpf_cnpj=cpf_cnpj).first()
         if existente:
-            print("[DEBUG] Cliente com CPF/CNPJ duplicado encontrado:", existente.to_dict())
             return jsonify({"erro": "Já existe um cliente com este CPF/CNPJ."}), 409
 
     cliente = Cliente(
@@ -56,8 +54,6 @@ def create_cliente():
     )
     db.session.add(cliente)
     db.session.commit()
-    print("[DEBUG] Criando novo cliente com os dados:", cliente.to_dict())
-    print("[DEBUG] Cliente criado com sucesso. ID:", cliente.id)
     return jsonify(cliente.to_dict()), 201
 
 # PUT /clientes/<id> → atualizar

@@ -20,6 +20,12 @@ export interface ReciboPreview {
   datas: string[];
 }
 
+export interface ResumoFinanceiroResponse {
+  sessoes: number;
+  recebido: number;
+  a_receber: number;
+}
+
 class SessaoService {
   getAll() {
     return api.get<Sessao[]>("/sessoes/");
@@ -44,6 +50,10 @@ class SessaoService {
 
   getRecibo(clienteId: number, mes: number, ano: number) {
     return api.get<ReciboPreview>(`/recibos/preview/${clienteId}?mes=${mes}&ano=${ano}`);
+  }
+
+  getResumoFinanceiro() {
+    return api.get<ResumoFinanceiroResponse>("/dashboard/resumo-financeiro");
   }
 }
 

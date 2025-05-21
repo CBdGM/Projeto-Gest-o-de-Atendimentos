@@ -38,16 +38,19 @@ def create_app():
     # Rotas
     from app.routes.clientes import clientes_bp
     from app.routes.sessoes import sessoes_bp
-    from app.routes.pagamentos import pagamentos_bp
     from app.routes.recibo import recibos_bp
     from app.routes.auth import auth_bp
+    from app.routes.dashboard import dashboard_bp  
+    from app.routes.proximasSessoes import proximas_sessoes_bp
+    from app.routes.sessoesAmanha import sessoes_amanha_bp
 
     app.register_blueprint(clientes_bp)
     app.register_blueprint(sessoes_bp)
-    app.register_blueprint(pagamentos_bp)
     app.register_blueprint(recibos_bp)
     app.register_blueprint(auth_bp)
-
+    app.register_blueprint(dashboard_bp)  
+    app.register_blueprint(proximas_sessoes_bp)
+    app.register_blueprint(sessoes_amanha_bp)
     # CLI (importa após init do app e db)
     from app.cli import renovar_sessoes_command
     app.cli.add_command(renovar_sessoes_command)
