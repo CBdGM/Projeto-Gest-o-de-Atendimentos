@@ -34,7 +34,7 @@ export default function SessoesAmanha({ sessoes }: Props) {
             </Typography>
           ) : (
             sessoes.map((s, index) => (
-              <ListItem key={index} divider sx={{ flexDirection: "column", alignItems: "flex-start" }}>
+              <ListItem key={index} divider sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 1 }}>
                 <ListItemText
                   primary={`${s.cliente} - ${s.tipo_atendimento}`}
                   secondary={`${s.data} às ${s.horario}`}
@@ -42,7 +42,7 @@ export default function SessoesAmanha({ sessoes }: Props) {
                 <Button
                   variant="outlined"
                   size="small"
-                  sx={{ mt: 1 }}
+                  sx={{ mt: { xs: 1, sm: 0 }, alignSelf: { xs: "flex-start", sm: "auto" } }}
                   onClick={() => enviarLembrete(s.telefone, s.cliente, s.horario)}
                 >
                   Enviar Lembrete
