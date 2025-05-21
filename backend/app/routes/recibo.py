@@ -31,10 +31,12 @@ def preview_recibo(id):
 
         quantidade = len(sessoes)
         valor_total = sum([float(s.valor or 0) for s in sessoes])
+        datas = [s.data.strftime("%d/%m/%Y") for s in sessoes]
 
         return jsonify({
             "quantidade": quantidade,
-            "valor_total": valor_total
+            "valor_total": valor_total,
+            "datas": datas
         })
 
     except Exception as e:

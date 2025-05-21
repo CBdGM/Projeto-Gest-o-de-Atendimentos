@@ -23,7 +23,6 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import EventIcon from "@mui/icons-material/Event";
 import AssignmentIcon from "@mui/icons-material/Assignment";
-import ReceiptIcon from "@mui/icons-material/Receipt";
 
 const drawerWidth = 240;
 
@@ -32,7 +31,6 @@ const navItems = [
   { label: "Clientes", path: "/clientes", icon: <PeopleIcon /> },
   { label: "Agenda", path: "/agenda", icon: <EventIcon /> },
   { label: "Sessões", path: "/sessoes", icon: <AssignmentIcon /> },
-  { label: "Recibos", path: "/recibos", icon: <ReceiptIcon /> },
 ];
 
 export default function Layout({

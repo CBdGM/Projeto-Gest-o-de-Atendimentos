@@ -17,6 +17,7 @@ export interface Sessao {
 export interface ReciboPreview {
   quantidade: number;
   valor_total: number;
+  datas: string[];
 }
 
 class SessaoService {
