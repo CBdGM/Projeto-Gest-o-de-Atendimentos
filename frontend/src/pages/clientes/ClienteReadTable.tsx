@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogActions
+  DialogActions,
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +29,10 @@ function formatCpfCnpj(value: string) {
   if (cleaned.length === 11) {
     return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
   } else if (cleaned.length === 14) {
-    return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+    return cleaned.replace(
+      /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+      "$1.$2.$3/$4-$5"
+    );
   }
   return value;
 }
@@ -38,17 +41,25 @@ function formatTelefone(value: string) {
   if (!value) return "";
   const cleaned = value.replace(/\D/g, "");
   if (cleaned.length <= 2) return `(${cleaned}`;
-  if (cleaned.length <= 6) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
-  if (cleaned.length <= 10) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
-  return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
+  if (cleaned.length <= 6)
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+  if (cleaned.length <= 10)
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(
+      6
+    )}`;
+  return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(
+    7,
+    11
+  )}`;
 }
-
 
 export default function ClienteReadTable() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
-  const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null);
+  const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(
+    null
+  );
   const navigate = useNavigate();
 
   const fetchClientes = async () => {
@@ -82,7 +93,12 @@ export default function ClienteReadTable() {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={2}
+      >
         <Typography variant="h3">Clientes</Typography>
         <Box display="flex" alignItems="center">
           <Button
@@ -90,14 +106,6 @@ export default function ClienteReadTable() {
             onClick={() => navigate("/clientes/novo")}
           >
             Adicionar Cliente
-          </Button>
-          <Button
-            variant="outlined"
-            sx={{ ml: 2 }}
-            onClick={() => navigate(`/recibos/gerar/${clienteSelecionado?.id}`)}
-            disabled={!clienteSelecionado}
-          >
-            Gerar Recibo
           </Button>
         </Box>
       </Box>
@@ -110,7 +118,8 @@ export default function ClienteReadTable() {
             <br />
             <strong>Nome:</strong> {clienteSelecionado?.nome}
             <br />
-            <strong>CPF/CNPJ:</strong> {formatCpfCnpj(clienteSelecionado?.cpf_cnpj || "")}
+            <strong>CPF/CNPJ:</strong>{" "}
+            {formatCpfCnpj(clienteSelecionado?.cpf_cnpj || "")}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -128,29 +137,76 @@ export default function ClienteReadTable() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Nome</TableCell>
-                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>CPF/CNPJ</TableCell>
-                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Email</TableCell>
-                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Telefone</TableCell>
-                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Telefone de Emergência</TableCell>
-                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Endereço</TableCell>
-                <TableCell sx={{ fontSize: '1rem', fontWeight: 500 }}>Ações</TableCell>
+                <TableCell sx={{ fontSize: "1rem", fontWeight: 500 }}>
+                  Nome
+                </TableCell>
+                <TableCell sx={{ fontSize: "1rem", fontWeight: 500 }}>
+                  CPF/CNPJ
+                </TableCell>
+                <TableCell sx={{ fontSize: "1rem", fontWeight: 500 }}>
+                  Email
+                </TableCell>
+                <TableCell sx={{ fontSize: "1rem", fontWeight: 500 }}>
+                  Telefone
+                </TableCell>
+                <TableCell sx={{ fontSize: "1rem", fontWeight: 500 }}>
+                  Telefone de Emergência
+                </TableCell>
+                <TableCell sx={{ fontSize: "1rem", fontWeight: 500 }}>
+                  Endereço
+                </TableCell>
+                <TableCell sx={{ fontSize: "1rem", fontWeight: 500 }}>
+                  Ações
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {clientes.map((cliente) => (
                 <TableRow key={cliente.id}>
-                  <TableCell sx={{ fontSize: '1rem' }}>{cliente.nome}</TableCell>
-                  <TableCell sx={{ fontSize: '1rem' }}>{formatCpfCnpj(cliente.cpf_cnpj)}</TableCell>
-                  <TableCell sx={{ fontSize: '1rem' }}>
-                    <a href={`mailto:${cliente.email}`} style={{ textDecoration: "none", color: "inherit" }}>
+                  <TableCell sx={{ fontSize: "1rem" }}>
+                    {cliente.nome}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "1rem" }}>
+                    {formatCpfCnpj(cliente.cpf_cnpj)}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "1rem" }}>
+                    <a
+                      href={`mailto:${cliente.email}`}
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
                       {cliente.email}
                     </a>
                   </TableCell>
-                  <TableCell sx={{ fontSize: '1rem' }}>{formatTelefone(cliente.telefone)}</TableCell>
-                  <TableCell sx={{ fontSize: '1rem' }}>{formatTelefone(cliente.telefone_emergencia || "")}</TableCell>
-                  <TableCell sx={{ fontSize: '1rem' }}>{cliente.endereco}</TableCell>
-                  <TableCell sx={{ fontSize: '1rem' }}>
+                  <TableCell sx={{ fontSize: "1rem" }}>
+                    <a
+                      href={`https://wa.me/55${cliente.telefone.replace(
+                        /\D/g,
+                        ""
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
+                      {formatTelefone(cliente.telefone)}
+                    </a>
+                  </TableCell>
+
+                  <TableCell sx={{ fontSize: "1rem" }}>
+                    <a
+                      href={`https://wa.me/55${(
+                        cliente.telefone_emergencia || ""
+                      ).replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: "none", color: "inherit" }}
+                    >
+                      {formatTelefone(cliente.telefone_emergencia || "")}
+                    </a>
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "1rem" }}>
+                    {cliente.endereco}
+                  </TableCell>
+                  <TableCell sx={{ fontSize: "1rem" }}>
                     <IconButton
                       color="primary"
                       onClick={() => navigate(`/clientes/editar/${cliente.id}`)}
@@ -176,8 +232,6 @@ export default function ClienteReadTable() {
           </Table>
         </TableContainer>
       )}
-
-      
     </Box>
   );
 }
