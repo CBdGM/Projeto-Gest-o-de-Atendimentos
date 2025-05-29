@@ -11,7 +11,8 @@ import SessaoCreate from "../pages/sessoes/sessaoCreate";
 import SessaoUpdate from "../pages/sessoes/sessaoUpdate";
 import AgendaPage from "../pages/AgendaPage";
 import ReciboGerar from "../pages/recibos/ReciboGerar";
-
+import HistoricoEdit from "../pages/historico/HistoricoUpdate"
+import HistoricoCreate from "../pages/historico/HistoricoCreate";
 interface AppRoutesProps {
   toggleTheme: () => void;
   mode: "light" | "dark";
@@ -41,7 +42,9 @@ export default function AppRoutes({ toggleTheme, mode }: AppRoutesProps) {
         <Route path="/agenda" element={<AgendaPage />} />   
 
         <Route path="/recibos/gerar/:id" element={<ReciboGerar />} />
-        {/* ...outras rotas */}
+        
+        <Route path="/historicos/editar/:id" element={<HistoricoEdit />} />
+        <Route path="/historicos/novo/:clienteId" element={<HistoricoCreate />} />
       </Route>
     </Routes>
   );
