@@ -46,3 +46,9 @@ def deletar_historico(id):
     db.session.delete(historico)
     db.session.commit()
     return jsonify({"mensagem": "Histórico deletado com sucesso."}), 200
+
+@historico_bp.route("/<int:id>", methods=["GET"])
+@jwt_required()
+def obter_historico(id):
+    historico = Historico.query.get_or_404(id)
+    return jsonify(historico.to_dict())
