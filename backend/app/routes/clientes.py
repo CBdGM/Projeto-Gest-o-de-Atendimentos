@@ -35,19 +35,26 @@ def get_cliente_by_nome(nome):
 @jwt_required()
 def create_cliente():
     data = request.get_json()
+    cpf_cnpj = data.get("cpf_cnpj", "").strip()
+
+    # Se o cpf_cnpj não for vazio e não for apenas zeros, checar duplicado
+    if cpf_cnpj and not all(c == "0" for c in cpf_cnpj):
+        existente = Cliente.query.filter_by(cpf_cnpj=cpf_cnpj).first()
+        if existente:
+            return jsonify({"erro": "Já existe um cliente com este CPF/CNPJ."}), 409
+
     cliente = Cliente(
         nome=data["nome"],
-        cpf_cnpj=data["cpf_cnpj"],
+        cpf_cnpj=cpf_cnpj,
         endereco=data.get("endereco"),
         telefone=data.get("telefone"),
         email=data.get("email"),
-        valor_padrao=data.get("valor_padrao"),
+        telefone_emergencia=data.get("telefone_emergencia"),
         ativo=True,
     )
     db.session.add(cliente)
     db.session.commit()
     return jsonify(cliente.to_dict()), 201
-
 
 # PUT /clientes/<id> → atualizar
 @clientes_bp.route("/<int:id>", methods=["PUT"])
@@ -55,16 +62,25 @@ def create_cliente():
 def update_cliente(id):
     cliente = Cliente.query.get_or_404(id)
     data = request.get_json()
+    novo_cpf_cnpj = data.get("cpf_cnpj", "").strip()
+
+    # Verifica se o cpf_cnpj foi alterado e não é só de zeros
+    if novo_cpf_cnpj and not all(c == "0" for c in novo_cpf_cnpj):
+        if novo_cpf_cnpj != cliente.cpf_cnpj:
+            existente = Cliente.query.filter_by(cpf_cnpj=novo_cpf_cnpj).first()
+            if existente and existente.id != id:
+                return jsonify({"erro": "Já existe outro cliente com este CPF/CNPJ."}), 409
+
     cliente.nome = data.get("nome", cliente.nome)
-    cliente.cpf_cnpj = data.get("cpf_cnpj", cliente.cpf_cnpj)
+    cliente.cpf_cnpj = novo_cpf_cnpj or cliente.cpf_cnpj
     cliente.endereco = data.get("endereco", cliente.endereco)
     cliente.telefone = data.get("telefone", cliente.telefone)
     cliente.email = data.get("email", cliente.email)
-    cliente.valor_padrao = data.get("valor_padrao", cliente.valor_padrao)
+    cliente.telefone_emergencia = data.get("telefone_emergencia", cliente.telefone_emergencia)
     cliente.ativo = data.get("ativo", cliente.ativo)
+
     db.session.commit()
     return jsonify(cliente.to_dict())
-
 
 # DELETE /clientes/<id> → excluir definitivamente
 @clientes_bp.route("/<int:id>", methods=["DELETE"])
