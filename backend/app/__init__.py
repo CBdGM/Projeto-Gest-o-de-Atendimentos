@@ -43,7 +43,9 @@ def create_app():
     from app.routes.dashboard import dashboard_bp  
     from app.routes.proximasSessoes import proximas_sessoes_bp
     from app.routes.sessoesAmanha import sessoes_amanha_bp
+    from app.routes.historico import historico_bp
 
+    app.register_blueprint(historico_bp)
     app.register_blueprint(clientes_bp)
     app.register_blueprint(sessoes_bp)
     app.register_blueprint(recibos_bp)
@@ -51,6 +53,7 @@ def create_app():
     app.register_blueprint(dashboard_bp)  
     app.register_blueprint(proximas_sessoes_bp)
     app.register_blueprint(sessoes_amanha_bp)
+    
     # CLI (importa após init do app e db)
     from app.cli import renovar_sessoes_command
     app.cli.add_command(renovar_sessoes_command)

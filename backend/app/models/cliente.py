@@ -14,7 +14,8 @@ class Cliente(db.Model):
     ativo = db.Column(db.Boolean, default=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     sessoes = db.relationship("Sessao", backref="cliente", cascade="all, delete", passive_deletes=True)
-
+    historicos = db.relationship("Historico", back_populates="cliente", cascade="all, delete-orphan")
+    
     def to_dict(self):
         return {
             "id": self.id,
