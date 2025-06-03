@@ -86,7 +86,6 @@ export default function ReciboGerar() {
       };
 
       setQuantidade(res.data.quantidade);
-      console.log("[DEBUG] Dados recebidos do backend:", res.data);
       setValorTotal(res.data.valor_total);
 
       // ✅ valor por extenso
@@ -94,8 +93,6 @@ export default function ReciboGerar() {
       const valorExtensoFormatado = extenso(valorNumerico, {
         mode: "currency",
       });
-      console.log("[DEBUG] Valor total (arredondado):", valorNumerico);
-      console.log("[DEBUG] Valor por extenso:", valorExtensoFormatado);
       setValorPorExtenso(valorExtensoFormatado);
 
       // ✅ datas formatadas
@@ -129,10 +126,6 @@ export default function ReciboGerar() {
           " e " +
           formatadas[formatadas.length - 1];
       }
-      console.log("[DEBUG] Datas recebidas:", datas);
-      console.log("[DEBUG] Datas ordenadas:", datasOrdenadas);
-      console.log("[DEBUG] Datas formatadas:", formatadas);
-      console.log("[DEBUG] Lista final de datas:", listaFinal);
       setDatasFormatadas(listaFinal);
     } catch (err) {
       console.error("Erro ao buscar recibo:", err);
