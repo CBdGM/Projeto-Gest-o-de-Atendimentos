@@ -8,7 +8,6 @@ import os
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 @auth_bp.route("/login", methods=["POST"])
-@cross_origin(origins="http://localhost:5173", supports_credentials=True)
 def login():
     data = request.get_json()
     username = data.get("username")
