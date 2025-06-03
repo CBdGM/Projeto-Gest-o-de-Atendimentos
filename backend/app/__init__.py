@@ -21,12 +21,14 @@ def create_app():
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=30)
     app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=7)
 
+    frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
     CORS(app,
-         resources={r"/*": {"origins": "http://localhost:5173"}},
+         resources={r"/*": {"origins": [frontend_origin, "http://localhost:5173"]}},
          supports_credentials=True,
          expose_headers=["Content-Type", "Authorization"],
          allow_headers=["Content-Type", "Authorization"]
     )
+
 
     db.init_app(app)
     jwt.init_app(app)
