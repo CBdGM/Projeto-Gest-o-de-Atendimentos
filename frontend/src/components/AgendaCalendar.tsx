@@ -4,15 +4,20 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import ptLocale from "@fullcalendar/core/locales/pt-br";
+import ptLocale from "@fullcalendar/core/locales/pt-br.js";
 import sessaoService from "../services/sessaoService";
 import clienteService from "../services/clienteService";
 import type { Sessao } from "../services/sessaoService";
 import Slider from "@mui/material/Slider";
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
+import type { DateClickArg } from "@fullcalendar/interaction";
+import type { EventClickArg } from "@fullcalendar/core";
 
 export default function AgendaCalendar() {
   const [eventos, setEventos] = useState<any[]>([]);
   const [range, setRange] = useState<[number, number]>([8, 20]);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // <- flag de carregamento
 
   const navigate = useNavigate();
 
@@ -26,37 +31,62 @@ export default function AgendaCalendar() {
 
   useEffect(() => {
     async function carregarSessoes() {
-      const { data } = await sessaoService.getAll();
-      const nomesClientes = await Promise.all(
-        data.map(async (sessao: Sessao) => {
-          const cliente = await clienteService.get(sessao.cliente_id);
-          return {
-            ...sessao,
-            nome_cliente: cliente.data.nome,
-          };
-        })
-      );
+      try {
+        const { data } = await sessaoService.getAll();
+        const nomesClientes = await Promise.all(
+          data.map(async (sessao: Sessao) => {
+            const cliente = await clienteService.get(sessao.cliente_id);
+            return {
+              ...sessao,
+              nome_cliente: cliente.data.nome,
+            };
+          })
+        );
 
-      const eventosFormatados = nomesClientes.map((sessao: Sessao & { nome_cliente: string }) => ({
-        id: sessao.id,
-        title: `${sessao.tipo_atendimento} - ${sessao.nome_cliente}`,
-        start: `${sessao.data}T${sessao.horario}`,
-        color: sessao.foi_paga ? "#5cb85c" : "#d9534f",
-        extendedProps: {
-          observacoes: sessao.observacoes,
-          valor: sessao.valor,
-          foi_realizada: sessao.foi_realizada,
-        },
-      }));
-      setEventos(eventosFormatados);
+        const eventosFormatados = nomesClientes.map(
+          (sessao: Sessao & { nome_cliente: string }) => ({
+            id: sessao.id,
+            title: `${sessao.tipo_atendimento} - ${sessao.nome_cliente}`,
+            start: `${sessao.data}T${sessao.horario}`,
+            color: sessao.foi_paga ? "#5cb85c" : "#d9534f",
+            extendedProps: {
+              observacoes: sessao.observacoes,
+              valor: sessao.valor,
+              foi_realizada: sessao.foi_realizada,
+            },
+          })
+        );
+        setEventos(eventosFormatados);
+      } finally {
+        setIsLoading(false); // <- esconde o loading após carregar
+      }
     }
 
     carregarSessoes();
   }, []);
 
+  if (isLoading) {
+    return (
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        height="80vh"
+      >
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
+
   return (
     <div style={{ marginTop: "-40px" }}>
-      <div style={{ marginBottom: "16px", display: "flex", justifyContent: "flex-end" }}>
+      <div
+        style={{
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
         <Slider
           value={range}
           onChange={(_, newValue) => setRange(newValue as [number, number])}
@@ -82,13 +112,12 @@ export default function AgendaCalendar() {
         nowIndicator
         slotMinTime={`${range[0].toString().padStart(2, "0")}:00:00`}
         slotMaxTime={`${(range[1] + 1).toString().padStart(2, "0")}:00:00`}
-        dateClick={(arg) => {
+        dateClick={(arg: DateClickArg) => {
           const data = arg.dateStr.split("T")[0];
-          const hora = arg.dateStr.split("T")[1]?.slice(0, 5); // "HH:MM"
+          const hora = arg.dateStr.split("T")[1]?.slice(0, 5);
           navigate(`/sessoes/novo?data=${data}&horario=${hora}`);
         }}
-        eventClick={(arg) => {
-          // Remove tooltip se existir
+        eventClick={(arg: EventClickArg) => {
           const tooltip = document.querySelector(".fc-tooltip");
           if (tooltip) tooltip.remove();
           document.removeEventListener("mousemove", () => {});
@@ -101,7 +130,9 @@ export default function AgendaCalendar() {
           tooltip.innerHTML = `
             <strong>${info.event.title}</strong><br/>
             Valor: ${formatCurrency(info.event.extendedProps.valor)}<br/>
-            Realizada: ${info.event.extendedProps.foi_realizada ? "Sim" : "Não"}<br/>
+            Realizada: ${
+              info.event.extendedProps.foi_realizada ? "Sim" : "Não"
+            }<br/>
             Observações: ${info.event.extendedProps.observacoes || "Nenhuma"}
           `;
           tooltip.style.position = "absolute";
@@ -125,10 +156,14 @@ export default function AgendaCalendar() {
             tooltip.style.top = `${e.pageY + 10}px`;
           };
           document.addEventListener("mousemove", move);
-          info.el.addEventListener("mouseleave", () => {
-            tooltip.remove();
-            document.removeEventListener("mousemove", move);
-          }, { once: true });
+          info.el.addEventListener(
+            "mouseleave",
+            () => {
+              tooltip.remove();
+              document.removeEventListener("mousemove", move);
+            },
+            { once: true }
+          );
         }}
       />
     </div>
