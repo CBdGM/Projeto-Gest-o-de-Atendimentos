@@ -1,8 +1,8 @@
-"""migração inicial com notas
+"""criar tabela notas
 
-Revision ID: 8aa2b46b437c
-Revises: 
-Create Date: 2025-06-11 17:29:29.871562
+Revision ID: 12a512b680f3
+Revises: 24c6ced0f9e4
+Create Date: 2025-06-11 18:19:32.529586
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '8aa2b46b437c'
-down_revision = None
+revision = '12a512b680f3'
+down_revision = '24c6ced0f9e4'
 branch_labels = None
 depends_on = None
 
