@@ -13,6 +13,7 @@ import AgendaPage from "../pages/AgendaPage";
 import ReciboGerar from "../pages/recibos/ReciboGerar";
 import HistoricoEdit from "../pages/historico/HistoricoUpdate"
 import HistoricoCreate from "../pages/historico/HistoricoCreate";
+import Notas from "../pages/notas/Notas"
 interface AppRoutesProps {
   toggleTheme: () => void;
   mode: "light" | "dark";
@@ -45,6 +46,8 @@ export default function AppRoutes({ toggleTheme, mode }: AppRoutesProps) {
         
         <Route path="/historicos/editar/:id" element={<HistoricoEdit />} />
         <Route path="/historicos/novo/:clienteId" element={<HistoricoCreate />} />
+
+        <Route path="/notas" element={<Notas />} />
       </Route>
     </Routes>
   );

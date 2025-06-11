@@ -31,6 +31,7 @@ const navItems = [
   { label: "Clientes", path: "/clientes", icon: <PeopleIcon /> },
   { label: "Agenda", path: "/agenda", icon: <EventIcon /> },
   { label: "Sessões", path: "/sessoes", icon: <AssignmentIcon /> },
+  { label: "Notas", path: "/notas", icon: <AssignmentIcon /> },
 ];
 
 export default function Layout({
