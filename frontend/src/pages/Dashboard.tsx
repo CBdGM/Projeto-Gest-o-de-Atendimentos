@@ -25,7 +25,6 @@ export default function Dashboard() {
     async function fetchProximas() {
       try {
         const res = await ProximasSessoesService.getProximasSessoes();
-        console.log("[DEBUG] Sessões recebidas do backend:", res.data);
         setProximasSessoes(res.data);
       } catch (err) {
         console.error("Erro ao buscar próximas sessões:", err);
@@ -39,10 +38,7 @@ export default function Dashboard() {
     async function fetchAmanha() {
       try {
         const res = await SessoesAmanhaService.getSessoesAmanha();
-        console.log(
-          "[DEBUG] Sessões de amanhã recebidas do backend:",
-          res.data
-        );
+        
         setSessoesAmanha(res.data);
       } catch (err) {
         console.error("Erro ao buscar sessões de amanhã:", err);

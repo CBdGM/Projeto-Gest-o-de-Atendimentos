@@ -5,6 +5,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  Button,
 } from "@mui/material";
 import type { SessaoProxima } from "../../services/proximasSessoesService";
 
@@ -13,7 +14,13 @@ type Props = {
 };
 
 export default function ProximasSessoes({ sessoes }: Props) {
-  console.log("[DEBUG] Próximas sessões recebidas:", sessoes);
+  const enviarLembrete = (telefone: string, nome: string, data: string, horario: string) => {
+    const mensagem = `Olá ${nome}, este é um lembrete da sua sessão marcada para o dia ${data} às ${horario}.`;
+    
+    const url = `https://wa.me/55${telefone.replace(/\D/g, "")}?text=${encodeURIComponent(mensagem)}`;
+    window.open(url, "_blank");
+  };
+
   return (
     <Card
       sx={{
@@ -21,7 +28,7 @@ export default function ProximasSessoes({ sessoes }: Props) {
         width: "100%",
         minWidth: 400,
         alignSelf: "flex-start",
-        maxHeight: 400, 
+        maxHeight: 400,
         overflowY: "auto",
       }}
     >
@@ -35,14 +42,43 @@ export default function ProximasSessoes({ sessoes }: Props) {
               Nenhuma sessão nos próximos dias.
             </Typography>
           ) : (
-            sessoes.map((s, index) => (
-              <ListItem key={index} divider>
-                <ListItemText
-                  primary={`${s.cliente} - ${s.tipo_atendimento}`}
-                  secondary={`${s.data} às ${s.horario}`}
-                />
-              </ListItem>
-            ))
+            sessoes.map((s, index) => {
+
+              return (
+                <ListItem
+                  key={index}
+                  divider
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    justifyContent: "space-between",
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    gap: 1,
+                  }}
+                >
+                  <ListItemText
+                    primary={`${s.cliente} - ${s.tipo_atendimento}`}
+                    secondary={`${s.data} às ${s.horario}`}
+                  />
+                  {!s.telefone ? (
+                    <Typography variant="caption" color="error">
+                      Telefone não disponível
+                    </Typography>
+                  ) : (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      sx={{ mt: { xs: 1, sm: 0 }, alignSelf: { xs: "flex-start", sm: "auto" } }}
+                      onClick={() =>
+                        enviarLembrete(s.telefone, s.cliente, s.data, s.horario)
+                      }
+                    >
+                      Enviar Lembrete
+                    </Button>
+                  )}
+                </ListItem>
+              );
+            })
           )}
         </List>
       </CardContent>

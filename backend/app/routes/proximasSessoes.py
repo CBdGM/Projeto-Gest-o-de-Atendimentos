@@ -14,20 +14,17 @@ def listar_proximas_sessoes():
     fim = hoje + timedelta(days=7)
 
     sessoes = Sessao.query.join(Cliente).filter(
-        and_(
-            Sessao.data >= hoje,
-            Sessao.data <= fim,
-            Sessao.foi_realizada == False  # <- Adicione este filtro
-        )
+        Sessao.data >= hoje,
+        Sessao.data <= fim,
+        Sessao.foi_realizada == False
     ).order_by(Sessao.data.asc(), Sessao.horario.asc()).all()
 
-    resultado = []
-    for s in sessoes:
-        resultado.append({
-            "cliente": s.cliente.nome,
-            "data": s.data.strftime("%d/%m/%Y"),
-            "horario": s.horario.strftime("%H:%M"),
-            "tipo_atendimento": s.tipo_atendimento
-        })
+    resultado = [{
+        "cliente": s.cliente.nome,
+        "telefone": s.cliente.telefone,
+        "data": s.data.strftime("%d/%m/%Y"),
+        "horario": s.horario.strftime("%H:%M"),
+        "tipo_atendimento": s.tipo_atendimento
+    } for s in sessoes]
 
     return jsonify(resultado)

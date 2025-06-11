@@ -1,7 +1,8 @@
 import api from "./axios";
 
 export interface SessaoProxima {
-  cliente: string;
+  cliente: string;         
+  telefone: string;        
   data: string;
   horario: string;
   tipo_atendimento: string;
