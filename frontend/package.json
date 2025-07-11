@@ -23,6 +23,7 @@
     "@mui/system": "^7.1.0",
     "axios": "^1.9.0",
     "extenso": "^2.1.0",
+    "jspdf": "^2.5.2",
     "numero-por-extenso": "^1.0.8",
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.10",

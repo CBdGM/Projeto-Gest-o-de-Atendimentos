@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import DashboardService from "../services/dashboardService";
 import type { ResumoFinanceiroResponse } from "../services/dashboardService";
 import ResumoFinanceiro from "../components/dashboard/ResumoFinanceiro";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography, Button } from "@mui/material";
 import ProximasSessoesService from "../services/proximasSessoesService";
 import type { SessaoProxima } from "../services/proximasSessoesService";
 import SessoesAmanhaService from "../services/sessoesAmanhaService";
 import type { SessaoAmanha } from "../services/sessoesAmanhaService";
+import RelatorioDialog from "../components/dashboard/RelatorioDialog";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,8 @@ export default function Dashboard() {
 
   const [proximasSessoes, setProximasSessoes] = useState<SessaoProxima[]>([]);
   const [sessoesAmanha, setSessoesAmanha] = useState<SessaoAmanha[]>([]);
+
+  const [openRelatorio, setOpenRelatorio] = useState(false);
 
   useEffect(() => {
     async function fetchProximas() {
@@ -70,9 +73,12 @@ export default function Dashboard() {
 
   return (
     <Box p={4} height="80vh" overflow="hidden">
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h4">Dashboard</Typography>
+        <Button variant="outlined" onClick={() => setOpenRelatorio(true)}>
+          GERAR RELATÓRIO
+        </Button>
+      </Box>
 
       {loading ? (
         <CircularProgress />
@@ -102,6 +108,7 @@ export default function Dashboard() {
           </Box>
         </Box>
       )}
+      <RelatorioDialog open={openRelatorio} onClose={() => setOpenRelatorio(false)} />
     </Box>
   );
 }
