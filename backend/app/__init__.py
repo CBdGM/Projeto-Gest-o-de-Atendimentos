@@ -47,6 +47,9 @@ def create_app():
     from app.routes.sessoesAmanha import sessoes_amanha_bp
     from app.routes.historico import historico_bp
     from app.routes.notas import notas_bp
+    from app.routes.relatorios import relatorios_bp
+    
+    app.register_blueprint(relatorios_bp)
     app.register_blueprint(notas_bp)
     app.register_blueprint(historico_bp)
     app.register_blueprint(clientes_bp)
