@@ -21,6 +21,7 @@ import {
   DialogActions,
   Switch,
   FormControlLabel,
+  Slider,
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -55,6 +56,31 @@ function formatCurrency(value: number | null | undefined) {
   });
 }
 
+// Estados para marks e limite dinâmicos do slider de período
+const STEP_DIAS = 15;
+function buildMarks(max: number) {
+  const marks = [] as { value: number; label: string }[];
+  for (let v = 0; v <= max; v += STEP_DIAS) {
+    marks.push({ value: v, label: String(v) });
+  }
+  if (marks[marks.length - 1]?.value !== max) {
+    marks.push({ value: max, label: String(max) });
+  }
+  return marks;
+}
+
+function parseYmd(d: string) {
+  const [y, m, day] = d.split("-").map(Number);
+  return new Date(y, m - 1, day);
+}
+
+function daysFromToday(ymd: string) {
+  const today = new Date();
+  const d = parseYmd(ymd);
+  const diffMs = today.setHours(0, 0, 0, 0) - d.setHours(0, 0, 0, 0);
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
 export default function SessaoReadTable() {
   const [sessoes, setSessaos] = useState<Sessao[]>([]);
   const [clientesMap, setClientesMap] = useState<Record<number, string>>({});
@@ -64,16 +90,36 @@ export default function SessaoReadTable() {
     null
   );
   const [expandedSessaoId, setExpandedSessaoId] = useState<number | null>(null);
-  const [exibirSessoesAntigas, setExibirSessoesAntigas] = useState(true);
+  const [somenteRealizadas, setSomenteRealizadas] = useState(false);
+  const [somenteNaoPagas, setSomenteNaoPagas] = useState(false);
+  const [somenteAtrasadasNaoRealizadas, setSomenteAtrasadasNaoRealizadas] = useState(false);
+  const [periodMax, setPeriodMax] = useState<number>(90);
+  const [periodMarks, setPeriodMarks] = useState<{ value: number; label: string }[]>(buildMarks(90));
+  const [periodoInit, setPeriodoInit] = useState(true);
+  const [periodoRange, setPeriodoRange] = useState<number[]>([0, 90]);
+  const [habilitarPeriodo, setHabilitarPeriodo] = useState(false);
   const navigate = useNavigate();
 
   const fetchSessaos = async () => {
     try {
       const response = await SessaoService.getAll();
       const ordenadas = response.data.sort(
-        (a, b) => new Date(a.data).getTime() - new Date(b.data).getTime()
+        (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
       );
       setSessaos(ordenadas);
+      // Ajuste dinâmico do slider para cobrir todas as sessões carregadas
+      if (ordenadas.length > 0) {
+        const maxDaysAll = Math.max(
+          ...ordenadas.map((s: Sessao) => Math.max(0, daysFromToday(s.data)))
+        );
+        const roundedMax = Math.max(STEP_DIAS, Math.ceil(maxDaysAll / STEP_DIAS) * STEP_DIAS);
+        setPeriodMax(roundedMax);
+        setPeriodMarks(buildMarks(roundedMax));
+        if (periodoInit) {
+          setPeriodoRange([0, roundedMax]);
+          setPeriodoInit(false);
+        }
+      }
     } catch (error: any) {
       console.error("Erro ao buscar sessoes", error?.response || error);
     } finally {
@@ -120,27 +166,75 @@ export default function SessaoReadTable() {
 
   return (
     <Box>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
-      >
+      <Box mb={2}>
         <Typography variant="h3" gutterBottom>
           Sessões
         </Typography>
-        <Box display="flex" alignItems="center">
+        <Box display="flex" alignItems="center" flexWrap="wrap" gap={2}>
           <FormControlLabel
             control={
               <Switch
-                checked={exibirSessoesAntigas}
-                onChange={(e) => setExibirSessoesAntigas(e.target.checked)}
+                checked={somenteRealizadas}
+                onChange={(e) => setSomenteRealizadas(e.target.checked)}
                 color="primary"
               />
             }
-            label="Exibir sessões antigas/realizadas"
+            label="Somente realizadas"
             sx={{ mr: 2 }}
           />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={somenteNaoPagas}
+                onChange={(e) => setSomenteNaoPagas(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Somente não pagas"
+            sx={{ mr: 2 }}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={somenteAtrasadasNaoRealizadas}
+                onChange={(e) => setSomenteAtrasadasNaoRealizadas(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Atrasadas não realizadas"
+            sx={{ mr: 2 }}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={habilitarPeriodo}
+                onChange={(e) => setHabilitarPeriodo(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Filtrar por período"
+            sx={{ mr: 2 }}
+          />
+          <Box sx={{ width: 280, mx: 2 }}>
+            <Typography variant="caption" sx={{ display: 'block', mb: 0.5 }}>
+              {habilitarPeriodo
+                ? `Período (dias atrás): ${Math.min(...periodoRange)}–${Math.max(...periodoRange)}`
+                : 'Período (desligado)'}
+            </Typography>
+            <Slider
+              value={periodoRange}
+              onChange={(_e, val) => setPeriodoRange(val as number[])}
+              valueLabelDisplay="off"
+              marks={periodMarks}
+              step={null}
+              min={0}
+              max={periodMax}
+              disableSwap
+              aria-labelledby="filtro-periodo"
+              disabled={!habilitarPeriodo}
+              sx={{ opacity: habilitarPeriodo ? 1 : 0.4 }}
+            />
+          </Box>
           <Button variant="contained" onClick={() => navigate("/sessoes/novo")}>
             Adicionar Sessão
           </Button>
@@ -206,9 +300,29 @@ export default function SessaoReadTable() {
             <TableBody>
               {sessoes
                 .filter((sessao) => {
-                  if (exibirSessoesAntigas) return true;
-                  const hoje = new Date().toISOString().split("T")[0];
-                  return !(sessao.data < hoje && sessao.foi_realizada);
+                  // 1) Filtro: somente realizadas (quando habilitado)
+                  if (somenteRealizadas && !sessao.foi_realizada) return false;
+
+                  // 2) Filtro novo: somente não pagas
+                  if (somenteNaoPagas && sessao.foi_paga) return false;
+
+                  // 3) Filtro: somente sessões com data passada e não realizadas (quando habilitado)
+                  if (somenteAtrasadasNaoRealizadas) {
+                    const hoje = new Date().toISOString().split("T")[0];
+                    const isPast = sessao.data < hoje;
+                    if (!(isPast && !sessao.foi_realizada)) return false;
+                  }
+
+                  // 4) Filtro novo: intervalo de período (em dias atrás) com dois seletores (aplicado apenas se habilitado)
+                  if (habilitarPeriodo) {
+                    const [a, b] = periodoRange;
+                    const minDays = Math.min(a, b);
+                    const maxDays = Math.max(a, b);
+                    const diff = daysFromToday(sessao.data);
+                    if (diff < minDays || diff > maxDays) return false;
+                  }
+
+                  return true;
                 })
                 .map((sessao) => (
                 <TableRow key={sessao.id}>
